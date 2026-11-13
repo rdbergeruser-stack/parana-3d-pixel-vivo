@@ -18,35 +18,35 @@ export const PLACE_CATEGORIES: Record<PlaceCategory, PlaceCategoryInfo> = {
   'historia': {
     id: 'historia',
     name: 'Historia y Patrimonio',
-    color: '#913e23',
+    color: '#c2410c', // Terracota / Ocre
     icon: 'Landmark',
     description: 'Edificios fundacionales, monumentos y sedes de la Confederación Argentina'
   },
   'cultura': {
     id: 'cultura',
     name: 'Cultura y Artes',
-    color: '#7a4fc0',
+    color: '#7e22ce', // Violeta editorial
     icon: 'Palette',
     description: 'Teatros, museos, salas de exposiciones y centros culturales'
   },
   'rio-y-verde': {
     id: 'rio-y-verde',
     name: 'Río y Verde',
-    color: '#3f8f4a',
+    color: '#15803d', // Verde esmeralda
     icon: 'Trees',
     description: 'Costanera, miradores sobre las barrancas, parques naturales y playas'
   },
   'deporte': {
     id: 'deporte',
     name: 'Deporte y Náutica',
-    color: '#2f6fb3',
+    color: '#1d4ed8', // Azul cobalto
     icon: 'Trophy',
     description: 'Clubes náuticos de río, estadios de fútbol y básquet, e instalaciones deportivas'
   },
   'paseos-y-compras': {
     id: 'paseos-y-compras',
     name: 'Paseos y Plazas',
-    color: '#c9821b',
+    color: '#b45309', // Ámbar dorado
     icon: 'ShoppingBag',
     description: 'Peatonales, ferias tradicionales, plazas cívicas y paseos gastronómicos'
   }

@@ -23,6 +23,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Eye,
+  EyeOff,
   Search,
   ExternalLink,
   MessageSquare,
@@ -55,46 +56,77 @@ function isPointInPolygon(point: [number, number], polygon: [number, number][]):
   return inside;
 }
 
-// Create a high-res numeric circular badge texture for place pins
+// Create a high-res minimalist circular badge texture for place pins (delicate ~20px diorama look)
 function createPinBadgeTexture(numberStr: string, colorHex: string): THREE.CanvasTexture {
-  const size = 128;
+  const size = 96;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
 
-  // Clear
   ctx.clearRect(0, 0, size, size);
 
-  // Outer glow / shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-  ctx.shadowBlur = 10;
+  // Soft subtle shadow
+  ctx.shadowColor = 'rgba(28, 25, 23, 0.28)';
+  ctx.shadowBlur = 8;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 4;
+  ctx.shadowOffsetY = 3;
 
   // Background circle
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 10, 0, Math.PI * 2);
+  ctx.arc(size / 2, size / 2, size / 2 - 8, 0, Math.PI * 2);
   ctx.fillStyle = colorHex;
   ctx.fill();
 
-  // Reset shadow for crisp border
+  // Crisp fine white border (equivalent to 1.5px on screen)
   ctx.shadowColor = 'transparent';
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 4;
   ctx.strokeStyle = '#ffffff';
   ctx.stroke();
 
-  // Number text
+  // Monospace bold text
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = 'bold 36px "JetBrains Mono", "SF Mono", monospace, -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(numberStr, size / 2, size / 2 + 2);
+  ctx.fillText(numberStr, size / 2, size / 2 + 1);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   return texture;
+}
+
+// Helper to determine the physical height of each building model
+function getBuildingHeight(placeId: string): number {
+  switch (placeId) {
+    case 'palacio_municipal': return 21.0;
+    case 'catedral_metropolitana': return 17.5;
+    case 'casa_de_gobierno': return 17.0;
+    case 'la_vieja_usina': return 18.5;
+    case 'teatro_3_febrero': return 12.0;
+    case 'estacion_ferrocarril': return 9.5;
+    case 'centro_cultural_juanele': return 8.5;
+    case 'estadio_patronato': return 11.5;
+    case 'escuela_normal': return 10.5;
+    case 'colegio_del_huerto': return 10.5;
+    case 'monumento_urquiza': return 11.0;
+    case 'patito_siriri': return 8.0;
+    case 'sala_mayo': return 8.5;
+    case 'tunel_subfluvial': return 7.5;
+    case 'letras_parana': return 4.5;
+    case 'monumento_al_mate': return 4.5;
+    case 'puerto_sanchez': return 5.0;
+    case 'balneario_municipal':
+    case 'balneario_thompson':
+    case 'bajada_grande': return 5.5;
+    case 'plaza_1_de_mayo':
+    case 'plaza_alvear':
+    case 'parque_urquiza':
+    case 'parque_nuevo':
+    case 'parque_gazzano': return 5.0;
+    default: return 6.5;
+  }
 }
 
 export default function ParanaMap3D() {
@@ -108,6 +140,7 @@ export default function ParanaMap3D() {
   const [activeRoute, setActiveRoute] = useState<TourRoute | null>(null);
   const [activeRouteStep, setActiveRouteStep] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showPins, setShowPins] = useState(true);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -252,8 +285,8 @@ export default function ParanaMap3D() {
 
     // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0c192c');
-    scene.fog = new THREE.FogExp2('#0c192c', 0.0016);
+    scene.background = new THREE.Color('#f3ede2');
+    scene.fog = new THREE.FogExp2('#f3ede2', 0.0015);
 
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -296,12 +329,12 @@ export default function ParanaMap3D() {
     renderer.domElement.addEventListener('pointerdown', cancelCameraAnimation);
     renderer.domElement.addEventListener('touchstart', cancelCameraAnimation, { passive: true });
 
-    // 3. Diorama Lighting (Warm sunny afternoon over the Paraná river)
-    const ambientLight = new THREE.HemisphereLight('#f1f5f9', '#475569', 0.95);
+    // 3. Warm Litoral Diorama Lighting (Warm sunny afternoon over the Paraná river)
+    const ambientLight = new THREE.HemisphereLight('#fff7ed', '#d6c7b2', 0.85);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight('#fff7ed', 1.85);
-    sunLight.position.set(180, 280, 140);
+    const sunLight = new THREE.DirectionalLight('#fff1d6', 1.6);
+    sunLight.position.set(190, 260, 130);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
@@ -315,35 +348,64 @@ export default function ParanaMap3D() {
     sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
-    // River bounce light (subtle cyan fill)
-    const riverBounceLight = new THREE.DirectionalLight('#38bdf8', 0.45);
-    riverBounceLight.position.set(-200, 100, -150);
+    // River bounce / ambient fill light (subtle sky blue warmth)
+    const riverBounceLight = new THREE.DirectionalLight('#bae6fd', 0.3);
+    riverBounceLight.position.set(-180, 90, -140);
     scene.add(riverBounceLight);
 
-    // 4. Diorama Under-Base Slab
-    const baseGeom = new THREE.BoxGeometry(680, 18, 560);
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: '#0f172a',
-      roughness: 0.8,
-      metalness: 0.1
-    });
-    const baseMesh = new THREE.Mesh(baseGeom, baseMat);
-    baseMesh.position.set(30, -9.5, 10);
-    baseMesh.receiveShadow = true;
-    scene.add(baseMesh);
+    // 4. Artisanal Diorama Cutout Base (Layered physical geological strata)
+    const baseGroup = new THREE.Group();
 
-    // 5. River Water Plane (Y = 0)
+    // Layer 1: Barranca Clay Stratum (y = -3 to 0)
+    const stratum1Geom = new THREE.BoxGeometry(684, 4, 564);
+    const stratum1Mat = new THREE.MeshStandardMaterial({
+      color: '#b58d67', // Earthy clay
+      roughness: 0.9,
+      metalness: 0.05
+    });
+    const stratum1Mesh = new THREE.Mesh(stratum1Geom, stratum1Mat);
+    stratum1Mesh.position.set(30, -2.0, 10);
+    stratum1Mesh.receiveShadow = true;
+    baseGroup.add(stratum1Mesh);
+
+    // Layer 2: Deep Geological Rock / Sedimentary Stratum (y = -10 to -3)
+    const stratum2Geom = new THREE.BoxGeometry(682, 7, 562);
+    const stratum2Mat = new THREE.MeshStandardMaterial({
+      color: '#785942', // Deep earth / rock
+      roughness: 0.95,
+      metalness: 0.05
+    });
+    const stratum2Mesh = new THREE.Mesh(stratum2Geom, stratum2Mat);
+    stratum2Mesh.position.set(30, -7.5, 10);
+    stratum2Mesh.receiveShadow = true;
+    baseGroup.add(stratum2Mesh);
+
+    // Layer 3: Craftsman Charcoal Plinth Pedestal (y = -22 to -10)
+    const plinthGeom = new THREE.BoxGeometry(690, 12, 570);
+    const plinthMat = new THREE.MeshStandardMaterial({
+      color: '#292524', // Warm charcoal craftsman timber
+      roughness: 0.85,
+      metalness: 0.15
+    });
+    const plinthMesh = new THREE.Mesh(plinthGeom, plinthMat);
+    plinthMesh.position.set(30, -17.0, 10);
+    plinthMesh.receiveShadow = true;
+    baseGroup.add(plinthMesh);
+
+    scene.add(baseGroup);
+
+    // 5. River Water Plane (Y = 0) with gentle pastel blue-green and foam rim
     const waterGeom = new THREE.PlaneGeometry(900, 750, 64, 64);
     const waterMat = new THREE.MeshStandardMaterial({
-      color: '#13576b',
-      roughness: 0.18,
-      metalness: 0.25,
+      color: '#3b82a6',
+      roughness: 0.22,
+      metalness: 0.15,
       transparent: true,
-      opacity: 0.94
+      opacity: 0.92
     });
     const waterMesh = new THREE.Mesh(waterGeom, waterMat);
     waterMesh.rotation.x = -Math.PI / 2;
-    waterMesh.position.set(-100, 0.05, 0);
+    waterMesh.position.set(-100, 0.06, 0);
     waterMesh.receiveShadow = true;
     scene.add(waterMesh);
 
@@ -416,19 +478,12 @@ export default function ParanaMap3D() {
         if (entry) {
           setHoveredPlace(entry.place);
           renderer.domElement.style.cursor = 'pointer';
-          hitSprite.scale.set(8.5, 8.5, 1);
           return;
         }
       }
 
       setHoveredPlace(null);
       renderer.domElement.style.cursor = 'default';
-      // Reset pin scales
-      pinSprites.forEach(p => {
-        if (selectedPlace?.id !== p.place.id) {
-          p.sprite.scale.set(6.5, 6.5, 1);
-        }
-      });
     };
 
     const onClick = (e: MouseEvent) => {
@@ -486,11 +541,18 @@ export default function ParanaMap3D() {
 
       controls.update();
 
-      // Bobbing animation for selected and hovered pins
+      // Dynamic zoom-based pin scaling & hover animation
+      const camDist = camera.position.distanceTo(controls.target);
+      const zoomFactor = THREE.MathUtils.clamp(1.12 - (camDist - 100) / 450, 0.72, 1.15);
+
       pinSprites.forEach(p => {
         const isSel = selectedPlace?.id === p.place.id;
         const isHov = hoveredPlace?.id === p.place.id;
-        const bobOffset = isSel || isHov ? Math.sin(elapsedTime * 4 + p.index) * 0.4 : 0;
+        const hoverScale = isSel || isHov ? 1.35 : 1.0;
+        const currentScale = 2.6 * zoomFactor * hoverScale;
+        p.sprite.scale.set(currentScale, currentScale, 1);
+
+        const bobOffset = isSel || isHov ? Math.sin(elapsedTime * 4 + p.index) * 0.25 : 0;
         p.sprite.position.y = p.basePos.y + bobOffset;
       });
 
@@ -558,6 +620,12 @@ export default function ParanaMap3D() {
     });
   }, [activeCategory]);
 
+  // Toggle entire pin markers group on/off
+  useEffect(() => {
+    if (!engineRef.current) return;
+    engineRef.current.pinGroup.visible = showPins;
+  }, [showPins]);
+
   // Update 3D luminous route line when activeRoute changes
   useEffect(() => {
     if (!engineRef.current) return;
@@ -611,15 +679,15 @@ export default function ParanaMap3D() {
   }, [activeRoute, flyToPlace]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden select-none bg-slate-950 font-sans">
+    <div className="relative w-full h-screen overflow-hidden select-none bg-[#f3ede2] font-sans">
       {/* 3D WebGL Canvas Container */}
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Loading Overlay */}
       {!isLoaded && (
-        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center z-50 text-white space-y-3">
-          <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium tracking-wide text-slate-300">
+        <div className="absolute inset-0 bg-[#f3ede2]/90 backdrop-blur-md flex flex-col items-center justify-center z-50 text-[#1c1917] space-y-3">
+          <div className="w-10 h-10 border-3 border-[#c2410c] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-semibold tracking-wider text-[#78716c] uppercase">
             Construyendo Terreno Voxel y Maqueta 3D de Paraná...
           </p>
         </div>
@@ -630,32 +698,32 @@ export default function ParanaMap3D() {
         {/* Left Section: Brand & Real-time Search */}
         <div className="flex items-center gap-2 pointer-events-auto">
           {/* Brand Pill */}
-          <div className="flex items-center gap-2.5 bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white px-3.5 py-2 rounded-2xl shadow-xl">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">
+          <div className="flex items-center gap-2.5 bg-[#faf6f0]/95 backdrop-blur-md border border-[#e2d9c8] text-[#1c1917] px-3.5 py-2 rounded-2xl shadow-sm">
+            <div className="w-7 h-7 rounded-lg bg-[#c2410c]/15 text-[#c2410c] border border-[#c2410c]/30 flex items-center justify-center font-bold text-sm">
               P
             </div>
             <div>
-              <h1 className="text-sm font-bold leading-tight">Paraná Pixelado</h1>
-              <p className="text-[10px] text-slate-400 leading-none">Entre Ríos, Argentina</p>
+              <h1 className="text-sm font-bold leading-tight text-[#1c1917]">Paraná Pixelado</h1>
+              <p className="text-[10px] text-[#78716c] leading-none">Entre Ríos, Argentina</p>
             </div>
           </div>
 
           {/* Real-time Search Input */}
           <div className="relative flex-1 md:w-64">
-            <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-2 rounded-2xl shadow-xl text-white">
-              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-2 bg-[#faf6f0]/95 backdrop-blur-md border border-[#e2d9c8] px-3 py-2 rounded-2xl shadow-sm text-[#1c1917]">
+              <Search className="w-3.5 h-3.5 text-[#78716c] shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 placeholder="Buscar lugar o barrio..."
-                className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+                className="bg-transparent border-none outline-none text-xs text-[#1c1917] placeholder-[#a8a29e] w-full"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="p-0.5 text-slate-400 hover:text-white"
+                  className="p-0.5 text-[#78716c] hover:text-[#1c1917]"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -666,7 +734,7 @@ export default function ParanaMap3D() {
             {isSearchFocused && searchResults.length > 0 && (
               <div
                 onMouseLeave={() => setIsSearchFocused(false)}
-                className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl p-1.5 shadow-2xl z-30 max-h-72 overflow-y-auto space-y-1"
+                className="absolute left-0 right-0 top-full mt-1.5 bg-[#faf6f0]/98 backdrop-blur-xl border border-[#e2d9c8] rounded-2xl p-1.5 shadow-xl z-30 max-h-72 overflow-y-auto space-y-1"
               >
                 {searchResults.map(place => (
                   <button
@@ -676,21 +744,21 @@ export default function ParanaMap3D() {
                       setIsSearchFocused(false);
                       setSearchQuery('');
                     }}
-                    className="w-full text-left p-2 rounded-xl text-xs hover:bg-slate-800/80 transition-colors flex items-center justify-between"
+                    className="w-full text-left p-2 rounded-xl text-xs hover:bg-[#ede3d4] transition-colors flex items-center justify-between"
                   >
                     <div>
-                      <div className="font-semibold text-white flex items-center gap-1.5">
+                      <div className="font-semibold text-[#1c1917] flex items-center gap-1.5">
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: PLACE_CATEGORIES[place.category].color }}
                         />
                         <span>{place.name}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
+                      <div className="text-[10px] text-[#78716c] truncate max-w-[200px]">
                         {place.zone} • {place.subtitle}
                       </div>
                     </div>
-                    <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <Compass className="w-3.5 h-3.5 text-[#c2410c] shrink-0" />
                   </button>
                 ))}
               </div>
@@ -699,13 +767,13 @@ export default function ParanaMap3D() {
         </div>
 
         {/* Center: Category Filter Pills */}
-        <div className="flex items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-800/80 p-1.5 rounded-2xl shadow-xl pointer-events-auto overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 bg-[#faf6f0]/95 backdrop-blur-md border border-[#e2d9c8] p-1.5 rounded-2xl shadow-sm pointer-events-auto overflow-x-auto max-w-full">
           <button
             onClick={() => setActiveCategory('todas')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
               activeCategory === 'todas'
-                ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-[#1c1917] text-[#faf6f0] font-semibold shadow-sm'
+                : 'text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4]'
             }`}
           >
             Todos ({PLACES.length})
@@ -722,46 +790,56 @@ export default function ParanaMap3D() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
                   isCatActive
                     ? 'text-white font-semibold shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    : 'text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4]'
                 }`}
                 style={{
                   backgroundColor: isCatActive ? cat.color : undefined
                 }}
               >
                 <span>{cat.name}</span>
-                <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                <span className="text-[10px] opacity-80 font-mono">({count})</span>
               </button>
             );
           })}
         </div>
 
-        {/* Right Section: Routes Dropdown & SSG Catalog Link */}
+        {/* Right Section: Routes Dropdown, Numbers Toggle & SSG Catalog Link */}
         <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Numbers Toggle Button */}
+          <button
+            onClick={() => setShowPins(!showPins)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium bg-[#faf6f0]/95 text-[#1c1917] border border-[#e2d9c8] hover:bg-[#ede3d4] transition-colors shadow-sm"
+            title={showPins ? 'Ocultar números de lugares' : 'Ver números de lugares'}
+          >
+            {showPins ? <EyeOff className="w-3.5 h-3.5 text-[#78716c]" /> : <Eye className="w-3.5 h-3.5 text-[#c2410c]" />}
+            <span className="hidden sm:inline">{showPins ? 'Ocultar números' : 'Ver números'}</span>
+          </button>
+
           {/* Catalog Link */}
           <Link
             href="/lugares"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium bg-slate-900/90 text-slate-200 border border-slate-800 hover:bg-slate-800 transition-colors shadow-xl"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium bg-[#faf6f0]/95 text-[#1c1917] border border-[#e2d9c8] hover:bg-[#ede3d4] transition-colors shadow-sm"
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <BookOpen className="w-3.5 h-3.5 text-[#c2410c]" />
             <span>Catálogo</span>
           </Link>
 
           {/* Routes Dropdown */}
           <div className="relative group">
             <button
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-medium shadow-xl border backdrop-blur-md transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-medium shadow-sm border backdrop-blur-md transition-all ${
                 activeRoute
-                  ? 'bg-emerald-600 text-white border-emerald-500 font-semibold'
-                  : 'bg-slate-900/90 text-slate-200 border-slate-800 hover:bg-slate-800'
+                  ? 'bg-[#15803d] text-white border-[#15803d] font-semibold'
+                  : 'bg-[#faf6f0]/95 text-[#1c1917] border-[#e2d9c8] hover:bg-[#ede3d4]'
               }`}
             >
-              <Navigation className="w-3.5 h-3.5 text-amber-400" />
+              <Navigation className="w-3.5 h-3.5 text-[#c2410c]" />
               <span>{activeRoute ? activeRoute.name : 'Recorridos'}</span>
             </button>
 
             {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl p-2 shadow-2xl hidden group-hover:block transition-all z-30">
-              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1 mb-1">
+            <div className="absolute right-0 top-full mt-2 w-72 bg-[#faf6f0]/98 backdrop-blur-xl border border-[#e2d9c8] rounded-2xl p-2 shadow-xl hidden group-hover:block transition-all z-30">
+              <div className="text-[11px] font-semibold text-[#78716c] uppercase tracking-wider px-2 py-1 mb-1">
                 Circuitos Curados
               </div>
               {activeRoute && (
@@ -770,7 +848,7 @@ export default function ParanaMap3D() {
                     setActiveRoute(null);
                     setActiveRouteStep(0);
                   }}
-                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs text-rose-400 hover:bg-rose-500/10 flex items-center justify-between mb-1"
+                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs text-rose-700 hover:bg-rose-50 flex items-center justify-between mb-1"
                 >
                   <span>Desactivar recorrido</span>
                   <X className="w-3.5 h-3.5" />
@@ -785,17 +863,17 @@ export default function ParanaMap3D() {
                   }}
                   className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
                     activeRoute?.id === route.id
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      ? 'bg-[#c2410c]/10 text-[#c2410c] border border-[#c2410c]/25'
+                      : 'text-[#1c1917] hover:bg-[#ede3d4]'
                   }`}
                 >
                   <div>
-                    <div className="font-medium text-slate-100">{route.name}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">
+                    <div className="font-semibold text-[#1c1917]">{route.name}</div>
+                    <div className="text-[10px] text-[#78716c] font-mono">
                       {route.places.length} paradas • {route.distance} • {route.duration}
                     </div>
                   </div>
-                  {activeRoute?.id === route.id && <Check className="w-4 h-4 text-amber-400" />}
+                  {activeRoute?.id === route.id && <Check className="w-4 h-4 text-[#c2410c]" />}
                 </button>
               ))}
             </div>
@@ -806,38 +884,38 @@ export default function ParanaMap3D() {
       {/* Active Route Step-by-Step Bottom Floating Bar */}
       {activeRoute && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 w-full max-w-lg px-4 pointer-events-auto animate-in slide-in-from-top duration-300">
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/40 rounded-2xl p-3 shadow-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="bg-[#faf6f0]/98 backdrop-blur-xl border border-[#15803d]/40 rounded-2xl p-3 shadow-xl text-[#1c1917] flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="space-y-0.5 text-left w-full sm:w-auto">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold text-white">{activeRoute.name}</span>
-                <span className="text-[10px] text-emerald-400 font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#15803d] animate-pulse" />
+                <span className="text-xs font-bold text-[#1c1917]">{activeRoute.name}</span>
+                <span className="text-[10px] text-[#15803d] font-mono px-2 py-0.5 rounded bg-[#15803d]/10 border border-[#15803d]/20 font-bold">
                   Parada {activeRouteStep + 1} de {activeRoute.places.length}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300">
-                Transporte: <span className="text-amber-300">{activeRoute.transport}</span> ({activeRoute.distance} • {activeRoute.duration})
+              <p className="text-[11px] text-[#78716c]">
+                Transporte: <span className="text-[#1c1917] font-semibold">{activeRoute.transport}</span> ({activeRoute.distance} • {activeRoute.duration})
               </p>
             </div>
 
             <div className="flex items-center gap-1.5 self-end sm:self-auto">
               <button
                 onClick={() => handleRouteStep('prev')}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1 text-slate-200"
+                className="px-2.5 py-1.5 rounded-xl bg-[#ede3d4] hover:bg-[#e4d6c2] text-xs font-medium flex items-center gap-1 text-[#1c1917]"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Anterior</span>
               </button>
               <button
                 onClick={() => handleRouteStep('next')}
-                className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold flex items-center gap-1 text-white shadow"
+                className="px-2.5 py-1.5 rounded-xl bg-[#15803d] hover:bg-[#166534] text-xs font-bold flex items-center gap-1 text-white shadow"
               >
                 <span className="hidden sm:inline">Siguiente</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setActiveRoute(null)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-xl text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4]"
                 title="Cerrar recorrido"
               >
                 <X className="w-4 h-4" />
@@ -850,13 +928,13 @@ export default function ParanaMap3D() {
       {/* Floating Hover Tooltip */}
       {hoveredPlace && !selectedPlace && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-20 animate-fade-in">
-          <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2.5">
+          <div className="bg-[#faf6f0]/95 backdrop-blur-md border border-[#e2d9c8] px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-2">
             <span
-              className="w-3 h-3 rounded-full"
+              className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: PLACE_CATEGORIES[hoveredPlace.category].color }}
             />
-            <span className="text-xs font-bold text-white">{hoveredPlace.name}</span>
-            <span className="text-[10px] text-slate-400">({hoveredPlace.zone})</span>
+            <span className="text-xs font-bold text-[#1c1917]">{hoveredPlace.name}</span>
+            <span className="text-[10px] text-[#78716c]">({hoveredPlace.zone})</span>
           </div>
         </div>
       )}
@@ -865,26 +943,26 @@ export default function ParanaMap3D() {
       <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2 pointer-events-auto">
         <div className="flex items-center gap-2">
           {/* Zoom & Reset Controls */}
-          <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1.5 rounded-2xl shadow-xl flex items-center gap-1">
+          <div className="bg-[#faf6f0]/95 backdrop-blur-md border border-[#e2d9c8] p-1.5 rounded-2xl shadow-sm flex items-center gap-1">
             <button
               onClick={resetCameraView}
               title="Centrar en Plaza 1° de Mayo"
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4] transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
-            <div className="w-[1px] h-5 bg-slate-800" />
+            <div className="w-[1px] h-5 bg-[#e2d9c8]" />
             <button
               onClick={() => handleZoom('in')}
               title="Acercar (Zoom +)"
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4] transition-colors"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleZoom('out')}
               title="Alejar (Zoom -)"
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4] transition-colors"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
@@ -896,16 +974,16 @@ export default function ParanaMap3D() {
               setIsFeedbackOpen(true);
               setFeedbackSuccess(false);
             }}
-            className="bg-slate-900/90 backdrop-blur-md border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800 text-slate-300 hover:text-amber-300 px-3 py-2.5 rounded-2xl shadow-xl text-xs font-medium flex items-center gap-2 transition-all"
+            className="bg-[#faf6f0]/95 backdrop-blur-md border border-[#e2d9c8] hover:border-[#c2410c]/40 text-[#1c1917] hover:text-[#c2410c] px-3.5 py-2.5 rounded-2xl shadow-sm text-xs font-medium flex items-center gap-2 transition-all"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+            <MessageSquare className="w-3.5 h-3.5 text-[#c2410c]" />
             <span className="hidden sm:inline">¿Algo está mal o falta? Avisanos</span>
             <span className="sm:hidden">Avisanos</span>
           </button>
         </div>
 
         {/* Navigation Hint */}
-        <div className="text-[10px] text-slate-400 bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-900 inline-flex items-center gap-1.5">
+        <div className="text-[10px] text-[#78716c] bg-[#faf6f0]/90 backdrop-blur px-2.5 py-1 rounded-lg border border-[#e2d9c8] inline-flex items-center gap-1.5 shadow-sm">
           <span>Arrastrar: Rotar</span>
           <span>•</span>
           <span>Click derecho: Mover</span>
@@ -917,36 +995,41 @@ export default function ParanaMap3D() {
       {/* Selected Place Card (Bottom-Right / Drawer) */}
       {selectedPlace && (
         <div className="absolute bottom-6 right-6 max-w-sm w-full z-30 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-5 shadow-2xl text-white space-y-3">
+          <div className="bg-[#faf6f0]/98 backdrop-blur-xl border border-[#e2d9c8] rounded-2xl p-5 shadow-2xl text-[#1c1917] space-y-3">
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <span
-                  className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-1"
-                  style={{
-                    backgroundColor: `${PLACE_CATEGORIES[selectedPlace.category].color}25`,
-                    color: PLACE_CATEGORIES[selectedPlace.category].color
-                  }}
-                >
-                  {PLACE_CATEGORIES[selectedPlace.category].name}
-                </span>
-                <h3 className="text-base font-bold text-white leading-tight">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#1c1917]/5 border border-[#e2d9c8] text-[#1c1917]">
+                    {String(PLACES.findIndex(p => p.id === selectedPlace.id) + 1).padStart(2, '0')}
+                  </span>
+                  <span
+                    className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: `${PLACE_CATEGORIES[selectedPlace.category].color}18`,
+                      color: PLACE_CATEGORIES[selectedPlace.category].color
+                    }}
+                  >
+                    {PLACE_CATEGORIES[selectedPlace.category].name}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-[#1c1917] leading-tight">
                   {selectedPlace.name}
                 </h3>
-                <p className="text-xs text-amber-300 font-medium">{selectedPlace.subtitle}</p>
+                <p className="text-xs text-[#c2410c] font-semibold">{selectedPlace.subtitle}</p>
               </div>
               <button
                 onClick={() => setSelectedPlace(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Metadata Badges */}
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+            <div className="flex items-center gap-2 text-[11px] text-[#78716c]">
               <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-slate-500" />
+                <MapPin className="w-3 h-3 text-[#78716c]" />
                 {selectedPlace.zone}
               </span>
               {selectedPlace.year && (
@@ -958,14 +1041,14 @@ export default function ParanaMap3D() {
             </div>
 
             {/* Description */}
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-[#44403c] leading-relaxed">
               {selectedPlace.description}
             </p>
 
             {/* Curiosity Note */}
             {selectedPlace.curiosity && (
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-xs text-amber-200/90 flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-xl p-2.5 text-xs text-[#92400e] flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-[#b45309] shrink-0 mt-0.5" />
                 <p className="leading-snug">{selectedPlace.curiosity}</p>
               </div>
             )}
@@ -975,7 +1058,7 @@ export default function ParanaMap3D() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => flyToPlace(selectedPlace)}
-                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg"
+                  className="flex-1 bg-[#c2410c] hover:bg-[#9a3412] text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow"
                 >
                   <Compass className="w-3.5 h-3.5" />
                   <span>Centrar Vista</span>
@@ -985,7 +1068,7 @@ export default function ParanaMap3D() {
                   href={`https://www.google.com/maps/search/?api=1&query=${selectedPlace.coordinates.lat},${selectedPlace.coordinates.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                  className="bg-[#ede3d4] hover:bg-[#e4d6c2] text-[#1c1917] py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-[#e2d9c8]"
                 >
                   <span>Cómo llegar ↗</span>
                 </a>
@@ -993,9 +1076,9 @@ export default function ParanaMap3D() {
 
               <Link
                 href={`/lugar/${selectedPlace.id}`}
-                className="w-full text-center text-xs text-amber-400 hover:text-amber-300 py-1.5 rounded-lg font-medium transition-colors"
+                className="w-full text-center text-xs text-[#c2410c] hover:underline py-1.5 rounded-lg font-semibold transition-colors"
               >
-                Ver ficha completa en el catálogo →
+                Ficha completa en el catálogo →
               </Link>
             </div>
           </div>
@@ -1004,36 +1087,36 @@ export default function ParanaMap3D() {
 
       {/* Collaboration Feedback Modal */}
       {isFeedbackOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl text-white space-y-4 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-[#1c1917]/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#faf6f0] border border-[#e2d9c8] rounded-3xl p-6 max-w-md w-full shadow-2xl text-[#1c1917] space-y-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-amber-400" />
+                <h3 className="text-base font-bold text-[#1c1917] flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[#c2410c]" />
                   Colaborá con Paraná Pixelado
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[#78716c]">
                   ¿Viste algún dato incorrecto o falta un hito emblemático?
                 </p>
               </div>
               <button
                 onClick={() => setIsFeedbackOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1 rounded-lg text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {feedbackSuccess ? (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 text-center space-y-2">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                <h4 className="text-sm font-bold text-white">¡Aporte recibido con éxito!</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
+              <div className="bg-[#15803d]/10 border border-[#15803d]/30 rounded-2xl p-5 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-[#15803d] mx-auto" />
+                <h4 className="text-sm font-bold text-[#1c1917]">¡Aporte recibido con éxito!</h4>
+                <p className="text-xs text-[#44403c] leading-relaxed">
                   Muchas gracias por colaborar para que Paraná Pixelado sea cada día más preciso y completo.
                 </p>
                 <button
                   onClick={() => setIsFeedbackOpen(false)}
-                  className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold"
+                  className="mt-2 px-4 py-2 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold"
                 >
                   Cerrar
                 </button>
@@ -1049,7 +1132,7 @@ export default function ParanaMap3D() {
                 className="space-y-3"
               >
                 {/* Feedback Type Tabs */}
-                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#ede3d4] rounded-xl border border-[#e2d9c8]">
                   {(['falta', 'error', 'sugerencia'] as const).map(type => (
                     <button
                       type="button"
@@ -1057,8 +1140,8 @@ export default function ParanaMap3D() {
                       onClick={() => setFeedbackType(type)}
                       className={`py-1.5 text-xs font-medium rounded-lg capitalize transition-colors ${
                         feedbackType === type
-                          ? 'bg-amber-500 text-slate-950 font-bold'
-                          : 'text-slate-400 hover:text-white'
+                          ? 'bg-[#1c1917] text-[#faf6f0] font-bold'
+                          : 'text-[#78716c] hover:text-[#1c1917]'
                       }`}
                     >
                       {type === 'falta' ? 'Falta lugar' : type === 'error' ? 'Dato erróneo' : 'Sugerencia'}
@@ -1068,7 +1151,7 @@ export default function ParanaMap3D() {
 
                 {/* Message */}
                 <div>
-                  <label className="text-[11px] text-slate-400 block mb-1">
+                  <label className="text-[11px] text-[#78716c] block mb-1">
                     Detalles del reporte o sugerencia
                   </label>
                   <textarea
@@ -1077,13 +1160,13 @@ export default function ParanaMap3D() {
                     value={feedbackMessage}
                     onChange={e => setFeedbackMessage(e.target.value)}
                     placeholder="Contanos qué edificio falta, la ubicación exacta o el dato a corregir..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50"
+                    className="w-full bg-[#f5ebe0]/70 border border-[#e2d9c8] rounded-xl p-3 text-xs text-[#1c1917] placeholder-[#a8a29e] outline-none focus:border-[#c2410c]"
                   />
                 </div>
 
                 {/* Email (Optional) */}
                 <div>
-                  <label className="text-[11px] text-slate-400 block mb-1">
+                  <label className="text-[11px] text-[#78716c] block mb-1">
                     Tu correo electrónico (opcional)
                   </label>
                   <input
@@ -1091,7 +1174,7 @@ export default function ParanaMap3D() {
                     value={feedbackEmail}
                     onChange={e => setFeedbackEmail(e.target.value)}
                     placeholder="ejemplo@correo.com"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50"
+                    className="w-full bg-[#f5ebe0]/70 border border-[#e2d9c8] rounded-xl p-2.5 text-xs text-[#1c1917] placeholder-[#a8a29e] outline-none focus:border-[#c2410c]"
                   />
                 </div>
 
@@ -1099,13 +1182,13 @@ export default function ParanaMap3D() {
                   <button
                     type="button"
                     onClick={() => setIsFeedbackOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-slate-800"
+                    className="px-4 py-2 rounded-xl text-xs text-[#78716c] hover:text-[#1c1917] hover:bg-[#ede3d4]"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1.5 shadow"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#c2410c] hover:bg-[#9a3412] text-white flex items-center gap-1.5 shadow"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Enviar Aporte</span>
@@ -1171,14 +1254,13 @@ function buildVoxelTerrain(
 
   // Building color palette (warm diorama towns)
   const bldgColors = [
-    '#f8fafc',
-    '#f1f5f9',
-    '#fef3c7',
-    '#fde68a',
-    '#fed7aa',
-    '#fca5a5',
-    '#cbd5e1',
-    '#e2e8f0'
+    '#f5ebe0',
+    '#e3d5ca',
+    '#d5a087',
+    '#ebd8c8',
+    '#f8f4ec',
+    '#8d6e63',
+    '#64748b'
   ];
 
   for (let ix = 0; ix < cols; ix++) {
@@ -1224,17 +1306,17 @@ function buildVoxelTerrain(
 
       instancedMesh.setMatrixAt(terrainCount, dummy.matrix);
 
-      // Determine voxel color based on topography & land use
+      // Determine voxel color based on topography & land use (Warm natural diorama palette)
       if (isIsland) {
         color.set('#a3b18a'); // Sand/vegetation island
       } else if (isPark) {
-        color.set(elev > 2.5 ? '#386641' : '#4f772d'); // Lush park greens
+        color.set(elev > 2.5 ? '#65a34e' : '#78b85d'); // Warm natural greens
       } else if (elev <= 1.2) {
         color.set('#d5bdaf'); // Costanera low stone / sand
       } else if (elev < 3.8) {
-        color.set('#6b705c'); // Barranca cliff transition rock
+        color.set(elev > 2.5 ? '#b58d67' : '#9c7350'); // Barranca cliff transition clay/earth
       } else {
-        color.set('#cbd5e1'); // Urban street asphalt / sidewalk base
+        color.set('#d6d3d1'); // Urban street asphalt / sidewalk base
       }
 
       instancedMesh.setColorAt(terrainCount, color);
@@ -1284,13 +1366,13 @@ function buildVoxelTerrain(
 }
 
 /**
- * 2. Build Main Arteries (Avenues) as dark asphalt strips with dashed centerlines
+ * 2. Build Main Arteries (Avenues) as warm graphite strips with dashed centerlines
  */
 function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
   const roadMat = new THREE.MeshStandardMaterial({
-    color: '#1e293b',
+    color: '#475569', // Warm graphite grey
     roughness: 0.85,
-    metalness: 0.15
+    metalness: 0.1
   });
 
   const lineMat = new THREE.MeshBasicMaterial({
@@ -1298,7 +1380,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
   });
 
   const secondaryMat = new THREE.MeshStandardMaterial({
-    color: '#334155',
+    color: '#d6d3d1', // Light stone sidewalks & secondary streets
     roughness: 0.9,
     metalness: 0.05
   });
@@ -1542,63 +1624,57 @@ function buildFlora(scene: THREE.Scene, geoData: GeoFeatureData) {
 }
 
 /**
- * 4. Build Place Pins for Iconic Places & Easter Eggs
+ * 4. Build Place Pins for Iconic Places & Easter Eggs (Minimalist, Elevated Above Buildings)
  */
 function buildPlacePins(
   pinGroup: THREE.Group,
   pinSprites: { sprite: THREE.Sprite; place: Place; index: number; basePos: THREE.Vector3 }[]
 ) {
-  const pinStemMat = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.65 });
-  const ringMat = new THREE.MeshBasicMaterial({ color: '#fbbf24', transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-  const ringGeom = new THREE.RingGeometry(0.8, 1.4, 16);
+  const pinStemMat = new THREE.MeshBasicMaterial({ color: '#78716c', transparent: true, opacity: 0.35 });
+  const ringMat = new THREE.MeshBasicMaterial({ color: '#c2410c', transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+  const ringGeom = new THREE.RingGeometry(0.5, 0.9, 16);
 
   PLACES.forEach((place, index) => {
     let { x, z } = projectTo3D(place.coordinates.lat, place.coordinates.lng);
     let elev = getElevation(place.coordinates.lat, place.coordinates.lng);
-    let colorHex = PLACE_CATEGORIES[place.category]?.color || '#f59e0b';
-    let pinHeight = 3.6;
+    let colorHex = PLACE_CATEGORIES[place.category]?.color || '#c2410c';
 
-    // Custom heights for tall bespoke landmarks to avoid clipping
-    if (place.id === 'catedral_metropolitana') {
-      pinHeight = 17.5;
-    } else if (place.id === 'palacio_municipal') {
-      pinHeight = 22.0;
-    } else if (place.id === 'teatro_3_febrero') {
-      pinHeight = 11.5;
-    } else if (place.id === 'monumento_urquiza') {
-      pinHeight = 12.0;
-    } else if (place.id === 'estadio_patronato') {
-      pinHeight = 11.5;
-    } else if (place.id === 'easter_egg_mate_gigante') {
-      // Under the diorama slab
+    // Position above the highest point of each building: y = buildingHeight + 2.5
+    let buildingH = getBuildingHeight(place.id);
+    let pinHeight = buildingH + 2.5;
+    let stemBottom = buildingH * 0.75;
+
+    if (place.id === 'easter_egg_mate_gigante') {
       x = 0;
       z = 0;
       elev = -11.0;
       pinHeight = 0;
-      colorHex = '#eab308';
+      colorHex = '#b45309';
     } else if (place.id === 'easter_egg_dorado_gigante') {
       x = -170;
       z = -140;
       elev = 0.4;
-      pinHeight = 3.5;
-      colorHex = '#f59e0b';
+      pinHeight = 3.2;
+      stemBottom = 0.5;
+      colorHex = '#b45309';
     }
 
-    // 1. Slender anchor line from ground up to floating pin
+    // 1. Ultra-fine semitransparent vertical stem from roof to pin (leaves building 100% visible)
     if (place.id !== 'easter_egg_mate_gigante') {
-      const stemGeom = new THREE.CylinderGeometry(0.08, 0.08, pinHeight, 6);
+      const stemLength = Math.max(1.0, pinHeight - stemBottom);
+      const stemGeom = new THREE.CylinderGeometry(0.035, 0.035, stemLength, 6);
       const stemMesh = new THREE.Mesh(stemGeom, pinStemMat);
-      stemMesh.position.set(x, elev + pinHeight / 2, z);
+      stemMesh.position.set(x, elev + stemBottom + stemLength / 2, z);
       pinGroup.add(stemMesh);
 
-      // 2. Glowing ground ring
+      // Subtle ground ring marker
       const ringMesh = new THREE.Mesh(ringGeom, ringMat);
       ringMesh.rotation.x = -Math.PI / 2;
-      ringMesh.position.set(x, elev + 0.08, z);
+      ringMesh.position.set(x, elev + 0.06, z);
       pinGroup.add(ringMesh);
     }
 
-    // 3. Floating numeric or star badge (Sprite)
+    // 2. Minimalist numeric or star badge (Sprite)
     let numberStr = String(index + 1).padStart(2, '0');
     if (place.id === 'easter_egg_mate_gigante') numberStr = '★';
     if (place.id === 'easter_egg_dorado_gigante') numberStr = '★';
@@ -1611,9 +1687,9 @@ function buildPlacePins(
     });
 
     const sprite = new THREE.Sprite(spriteMat);
-    const basePos = new THREE.Vector3(x, elev + pinHeight + 1.2, z);
+    const basePos = new THREE.Vector3(x, elev + pinHeight, z);
     sprite.position.copy(basePos);
-    sprite.scale.set(6.5, 6.5, 1);
+    sprite.scale.set(2.6, 2.6, 1);
 
     pinGroup.add(sprite);
 
