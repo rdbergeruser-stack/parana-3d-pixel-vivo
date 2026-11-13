@@ -35,6 +35,8 @@ export const materials = {
   duckOrange: new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.6, flatShading: true }),
   duckBlack: new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.5 }),
   duckWhite: new THREE.MeshStandardMaterial({ color: '#fef3c7', roughness: 0.6, flatShading: true }),
+  duckCyan: new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.6, flatShading: true }),
+  duckPink: new THREE.MeshStandardMaterial({ color: '#ec4899', roughness: 0.6, flatShading: true }),
   patronatoRed: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.75, flatShading: true }),
   patronatoBlack: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.8, flatShading: true }),
   pitchGrass: new THREE.MeshStandardMaterial({ color: '#16a34a', roughness: 0.9, flatShading: true }),
@@ -574,55 +576,57 @@ export function buildPatitoSiriri(): THREE.Group {
   group.name = 'landmark_patito_siriri';
 
   // 1. Terraced green mound (Loma verde del Parque Urquiza)
-  addBox(group, 11, 0.6, 11, 0, 0.3, 0, materials.pitchGrass);
-  addBox(group, 9, 0.6, 9, 0, 0.9, 0, materials.pitchGrass);
-  addBox(group, 7, 0.6, 7, 0, 1.5, 0, materials.pitchGrass);
+  addBox(group, 10, 0.6, 10, 0, 0.3, 0, materials.pitchGrass);
+  addBox(group, 8, 0.6, 8, 0, 0.9, 0, materials.pitchGrass);
+  addBox(group, 6, 0.6, 6, 0, 1.5, 0, materials.pitchGrass);
 
   // Flower micro-voxels dotted around the mound
-  const flowerColors = [materials.duckYellow, materials.patronatoRed, materials.goldAccent, materials.pureWhite];
+  const flowerColors = [materials.duckYellow, materials.patronatoRed, materials.duckPink, materials.pureWhite];
   const flowerOffsets = [
-    [-4.2, -3.5], [-3.8, 3.2], [4.0, -3.0], [3.5, 3.8],
-    [-2.8, -4.0], [2.6, 4.2], [-4.0, 0], [4.2, 0.5]
+    [-3.8, -3.2], [-3.2, 2.8], [3.5, -2.6], [3.0, 3.2],
+    [-2.4, -3.4], [2.2, 3.6], [-3.5, 0], [3.6, 0.4]
   ];
   flowerOffsets.forEach(([fx, fz], idx) => {
     addBox(group, 0.4, 0.4, 0.4, fx, 0.7, fz, flowerColors[idx % flowerColors.length]);
   });
 
   // 2. Webbed duck feet resting on the grass
-  addBox(group, 1.0, 0.25, 1.6, -1.2, 1.9, 0.4, materials.duckOrange);
-  addBox(group, 1.0, 0.25, 1.6, 1.2, 1.9, 0.4, materials.duckOrange);
+  addBox(group, 1.0, 0.25, 1.6, -1.1, 1.9, 0.4, materials.duckOrange);
+  addBox(group, 1.0, 0.25, 1.6, 1.1, 1.9, 0.4, materials.duckOrange);
 
   // 3. Rounded Voxel Body
   // Tier 1: Lower belly
   addBox(group, 3.6, 0.8, 4.4, 0, 2.4, 0, materials.duckWhite);
-  // Tier 2: Mid body & chest
+  // Tier 2: Mid body & colorful chest
   addBox(group, 4.2, 1.2, 4.8, 0, 3.3, 0, materials.duckYellow);
-  addBox(group, 3.2, 1.0, 1.0, 0, 3.3, 2.2, materials.duckBrown); // Brown chest patch
+  addBox(group, 3.4, 0.9, 1.0, 0, 3.3, 2.2, materials.duckPink); // Pink chest band
   // Tier 3: Upper back
   addBox(group, 3.8, 1.0, 4.2, 0, 4.3, -0.2, materials.duckYellow);
 
-  // 4. Folded Wings on both flanks
+  // 4. Folded Wings on both flanks with colorful stripes (cyan, pink, yellow)
   [-2.2, 2.2].forEach(wx => {
-    addBox(group, 0.5, 1.4, 3.4, wx, 3.4, -0.2, materials.duckBrown);
-    addBox(group, 0.4, 0.8, 2.2, wx * 1.05, 3.6, -0.4, materials.duckGold);
+    addBox(group, 0.5, 1.4, 3.4, wx, 3.4, -0.2, materials.duckCyan);
+    addBox(group, 0.55, 0.6, 2.8, wx, 3.8, -0.2, materials.duckPink);
+    addBox(group, 0.6, 0.5, 2.0, wx * 1.05, 3.3, -0.4, materials.duckYellow);
   });
 
   // 5. Upturned tail feathers
-  addBox(group, 1.8, 0.8, 1.8, 0, 3.8, -2.6, materials.duckYellow);
-  addBox(group, 1.2, 1.2, 1.2, 0, 4.6, -3.2, materials.duckBrown);
+  addBox(group, 1.8, 0.8, 1.8, 0, 3.8, -2.6, materials.duckCyan);
+  addBox(group, 1.2, 1.2, 1.2, 0, 4.6, -3.2, materials.duckYellow);
 
   // 6. Upright Slender Neck
   addBox(group, 1.8, 1.2, 1.8, 0, 5.2, 1.4, materials.duckYellow);
   addBox(group, 1.6, 1.4, 1.6, 0, 6.3, 1.4, materials.duckYellow);
 
-  // Red Scarf (Bufanda roja clásica de Paraná)
+  // Striped Scarf / Collar (Red & Cyan)
   addBox(group, 2.1, 0.5, 2.1, 0, 5.5, 1.4, materials.patronatoRed);
-  addBox(group, 0.5, 1.2, 0.3, 0.6, 4.8, 2.4, materials.patronatoRed); // Hanging scarf tail
+  addBox(group, 0.5, 1.2, 0.3, 0.6, 4.8, 2.4, materials.duckCyan); // Hanging scarf tail
 
   // 7. Head & Beak
   // Head block
   addBox(group, 2.2, 1.8, 2.4, 0, 7.7, 1.4, materials.duckYellow);
-  addBox(group, 2.4, 0.6, 1.6, 0, 7.8, 1.4, materials.duckBrown); // Head cap
+  // Cyan Cap / Crown from reference image
+  addBox(group, 2.4, 0.7, 2.0, 0, 8.5, 1.3, materials.duckCyan);
 
   // Eyes (Black with white glint)
   [-1.15, 1.15].forEach(ex => {
@@ -637,11 +641,6 @@ export function buildPatitoSiriri(): THREE.Group {
   return group;
 }
 
-/**
- * 11. Monumento al Gral. Justo José de Urquiza (Parque Urquiza)
- * Neoclassical esplanade on the ravine bluff, massive marble pedestal with allegorical figures,
- * and bronze equestrian statue sculpted in micro-voxels (rearing horse and general).
- */
 export function buildMonumentoUrquiza(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_monumento_urquiza';
