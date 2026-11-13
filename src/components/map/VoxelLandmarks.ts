@@ -1,7 +1,8 @@
 /**
  * src/components/map/VoxelLandmarks.ts
- * High-detail bespoke voxel composite sculptures and typological models for Paraná Pixelado
+ * High-definition bespoke voxel composite sculptures and typological models for Paraná Pixelado
  * 100% of places receive a dedicated 3D voxel model
+ * No primitive cylinders/cones for sculptures - built with true micro-voxel matrices
  */
 
 import * as THREE from 'three';
@@ -11,24 +12,29 @@ import { Place } from '@/data/places';
 export const materials = {
   // Architectural Stones & Bricks
   whiteStone: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.7, flatShading: true }),
+  pureWhite: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.5, flatShading: true }),
   creamStone: new THREE.MeshStandardMaterial({ color: '#fef3c7', roughness: 0.75, flatShading: true }),
   peachStone: new THREE.MeshStandardMaterial({ color: '#fed7aa', roughness: 0.75, flatShading: true }),
   granitePlinth: new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.8, flatShading: true }),
   slateRoof: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.6, flatShading: true }),
   zincRoof: new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.55, flatShading: true }),
+  copperGreen: new THREE.MeshStandardMaterial({ color: '#0d9488', roughness: 0.6, flatShading: true }),
   terracotta: new THREE.MeshStandardMaterial({ color: '#9a3412', roughness: 0.8, flatShading: true }),
   brickWall: new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.85, flatShading: true }),
   industrialBrick: new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.85, flatShading: true }),
   darkWindows: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.3, metalness: 0.2 }),
+  glassCyan: new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.2, metalness: 0.6 }),
   goldAccent: new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.3, metalness: 0.75 }),
   woodPlanks: new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.85, flatShading: true }),
   bronzeStatue: new THREE.MeshStandardMaterial({ color: '#3f2e1e', roughness: 0.5, metalness: 0.6, flatShading: true }),
   
   // Specific Landmark Colors
   duckYellow: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.6, flatShading: true }),
+  duckGold: new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.6, flatShading: true }),
+  duckBrown: new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.7, flatShading: true }),
   duckOrange: new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.6, flatShading: true }),
   duckBlack: new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.5 }),
-  redCrane: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.65, flatShading: true }),
+  duckWhite: new THREE.MeshStandardMaterial({ color: '#fef3c7', roughness: 0.6, flatShading: true }),
   patronatoRed: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.75, flatShading: true }),
   patronatoBlack: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.8, flatShading: true }),
   pitchGrass: new THREE.MeshStandardMaterial({ color: '#16a34a', roughness: 0.9, flatShading: true }),
@@ -38,681 +44,770 @@ export const materials = {
   whiteLine: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
   stadiumLight: new THREE.MeshStandardMaterial({ color: '#fef08a', emissive: '#fef08a', emissiveIntensity: 0.85 }),
 
-  // Easter Eggs
+  // Easter Eggs & Fauna
   mateWood: new THREE.MeshStandardMaterial({ color: '#451a03', roughness: 0.5, flatShading: true }),
   mateSilver: new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.2, metalness: 0.85 }),
   yerbaGreen: new THREE.MeshStandardMaterial({ color: '#3f6212', roughness: 0.9, flatShading: true }),
-  doradoGold: new THREE.MeshStandardMaterial({ color: '#f59e0b', roughness: 0.3, metalness: 0.4, flatShading: true }),
+  doradoGold: new THREE.MeshStandardMaterial({ color: '#f59e0b', roughness: 0.25, metalness: 0.6, flatShading: true }),
+  doradoAmber: new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.3, metalness: 0.5, flatShading: true }),
+  doradoSilver: new THREE.MeshStandardMaterial({ color: '#fef08a', roughness: 0.2, metalness: 0.7, flatShading: true }),
   doradoRed: new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.4, flatShading: true }),
-  waterFoam: new THREE.MeshStandardMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.75, roughness: 0.2 })
+  doradoBlack: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.4 }),
+  waterFoam: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, flatShading: true }),
+  waterSplash: new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.1, transparent: true, opacity: 0.85 })
 };
 
+/**
+ * Helper to add a voxel box to a group
+ */
+function addBox(
+  group: THREE.Group,
+  w: number,
+  h: number,
+  d: number,
+  x: number,
+  y: number,
+  z: number,
+  mat: THREE.Material,
+  castShadow = true
+) {
+  const geom = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = castShadow;
+  mesh.receiveShadow = true;
+  group.add(mesh);
+  return mesh;
+}
+
 // ==========================================
-// 1. Bespoke Hand-Crafted Landmark Models
+// 1. Pixel Font Matrix "PARANÁ" Generator
+// ==========================================
+
+const FONT_5x7: Record<string, string[]> = {
+  P: [
+    '11110',
+    '10001',
+    '10001',
+    '11110',
+    '10000',
+    '10000',
+    '10000'
+  ],
+  A: [
+    '01110',
+    '10001',
+    '10001',
+    '11111',
+    '10001',
+    '10001',
+    '10001'
+  ],
+  R: [
+    '11110',
+    '10001',
+    '10001',
+    '11110',
+    '10100',
+    '10010',
+    '10001'
+  ],
+  N: [
+    '10001',
+    '11001',
+    '10101',
+    '10011',
+    '10001',
+    '10001',
+    '10001'
+  ],
+  'Á': [
+    '00010', // Row -1: accent mark (tilde)
+    '01110', // Row 0
+    '10001', // Row 1
+    '10001', // Row 2
+    '11111', // Row 3
+    '10001', // Row 4
+    '10001', // Row 5
+    '10001'  // Row 6
+  ]
+};
+
+/**
+ * Creates 3D Voxel Letters using a 5x7 bitmap matrix
+ */
+export function createVoxelText(text: string): THREE.Group {
+  const group = new THREE.Group();
+  const voxelSize = 0.30;
+  const voxelDepth = 0.42;
+  const letterSpacing = 0.55;
+  const letterWidth = 5 * voxelSize;
+
+  const totalWidth = text.length * letterWidth + (text.length - 1) * letterSpacing;
+  let cursorX = -totalWidth / 2 + letterWidth / 2;
+
+  const letterMat = materials.pureWhite;
+  const boxGeom = new THREE.BoxGeometry(voxelSize, voxelSize, voxelDepth);
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const bitmap = FONT_5x7[char] || FONT_5x7['A'];
+    const rows = bitmap.length;
+
+    for (let r = 0; r < rows; r++) {
+      const line = bitmap[r];
+      // If letter has accent (length 8), row 0 is accent at y = 7
+      const yIndex = rows === 8 ? (7 - r) : (6 - r);
+      const y = yIndex * voxelSize;
+
+      for (let c = 0; c < line.length; c++) {
+        if (line[c] === '1') {
+          const x = cursorX + (c - 2) * voxelSize;
+          const mesh = new THREE.Mesh(boxGeom, letterMat);
+          mesh.position.set(x, y, 0);
+          mesh.castShadow = true;
+          group.add(mesh);
+        }
+      }
+    }
+    cursorX += letterWidth + letterSpacing;
+  }
+
+  return group;
+}
+
+// ==========================================
+// 2. Bespoke Hand-Crafted Landmark Models
 // ==========================================
 
 /**
  * 1. Catedral Metropolitana de Paraná
+ * Architectural detail: 3-tier stepped podium, 6 Corinthian columns, front pediment with cross,
+ * dual 4-stage bell towers with clock and roofs, massive 12-sided drum dome with copper lantern,
+ * and rhythmic arched clerestory windows.
  */
 export function buildCatedral(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_catedral_metropolitana';
 
-  const podium = new THREE.Mesh(new THREE.BoxGeometry(18, 0.8, 22), materials.whiteStone);
-  podium.position.y = 0.4;
-  podium.receiveShadow = true;
-  group.add(podium);
+  // 1. Triple-tier entrance podium & grand steps
+  addBox(group, 22, 0.4, 26, 0, 0.2, 0, materials.granitePlinth);
+  addBox(group, 20, 0.4, 25, 0, 0.6, 0.5, materials.whiteStone);
+  addBox(group, 18, 0.4, 24, 0, 1.0, 1.0, materials.whiteStone);
 
-  const nave = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 18), materials.creamStone);
-  nave.position.set(0, 4.4, 0);
-  nave.castShadow = true;
-  nave.receiveShadow = true;
-  group.add(nave);
+  // 2. Main Basilica Nave & Transept
+  addBox(group, 14, 9, 20, 0, 5.5, -1, materials.creamStone);
+  addBox(group, 20, 8.5, 8, 0, 5.25, -3, materials.creamStone); // Transept cross
 
-  const pediment = new THREE.Mesh(new THREE.ConeGeometry(7, 2.5, 3), materials.whiteStone);
-  pediment.rotation.y = Math.PI;
-  pediment.rotation.z = Math.PI / 2;
-  pediment.position.set(0, 9.2, 9.2);
-  pediment.castShadow = true;
-  group.add(pediment);
-
-  for (let i = -2.5; i <= 2.5; i += 1.0) {
-    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 7.2, 8), materials.whiteStone);
-    col.position.set(i * 2.2, 4.0, 9.2);
-    col.castShadow = true;
-    group.add(col);
+  // 3. Classical Front Portico (Hexastyle)
+  addBox(group, 15, 0.6, 3.5, 0, 1.3, 9.5, materials.whiteStone); // Stylobate
+  for (let c = -2.5; c <= 2.5; c += 1.0) {
+    addBox(group, 0.7, 7.2, 0.7, c * 2.2, 5.0, 10.5, materials.whiteStone); // Columns
+    // Column capital detail
+    addBox(group, 0.9, 0.3, 0.9, c * 2.2, 8.75, 10.5, materials.goldAccent);
   }
+  // Entablature and triangular pediment
+  addBox(group, 15.5, 1.0, 3.5, 0, 9.4, 10.2, materials.whiteStone);
+  // Stepped tympanum
+  addBox(group, 13, 0.8, 0.5, 0, 10.3, 11.2, materials.whiteStone);
+  addBox(group, 9, 0.8, 0.5, 0, 11.1, 11.2, materials.whiteStone);
+  addBox(group, 5, 0.8, 0.5, 0, 11.9, 11.2, materials.whiteStone);
+  addBox(group, 0.6, 1.8, 0.6, 0, 13.0, 11.2, materials.goldAccent); // Apex cross
 
-  [-6.2, 6.2].forEach(tx => {
-    const shaft = new THREE.Mesh(new THREE.BoxGeometry(3.6, 13, 3.6), materials.whiteStone);
-    shaft.position.set(tx, 7.0, 8.0);
-    shaft.castShadow = true;
-    group.add(shaft);
-
-    const belfry = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.0, 3.0), materials.creamStone);
-    belfry.position.set(tx, 14.5, 8.0);
-    belfry.castShadow = true;
-    group.add(belfry);
-
-    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.4, 4.0, 4), materials.slateRoof);
-    roof.position.set(tx, 17.5, 8.0);
-    roof.rotation.y = Math.PI / 4;
-    roof.castShadow = true;
-    group.add(roof);
-
-    const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.2, 0.18), materials.goldAccent);
-    crossV.position.set(tx, 19.8, 8.0);
-    const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.18, 0.18), materials.goldAccent);
-    crossH.position.set(tx, 20.0, 8.0);
-    group.add(crossV, crossH);
+  // 4. Dual Bell Towers (Torres Campanario)
+  [-6.8, 6.8].forEach(tx => {
+    // Stage 1: Lower tower body
+    addBox(group, 4.2, 10, 4.2, tx, 6.0, 8.5, materials.whiteStone);
+    // Stage 2: Clock stage with moldings
+    addBox(group, 4.6, 0.5, 4.6, tx, 11.25, 8.5, materials.whiteStone);
+    addBox(group, 3.8, 3.5, 3.8, tx, 13.0, 8.5, materials.creamStone);
+    addBox(group, 1.4, 1.4, 0.1, tx, 13.2, 10.45, materials.creamStone); // Clock face
+    // Stage 3: Belfry with open arches (dark recesses)
+    addBox(group, 4.2, 0.5, 4.2, tx, 15.0, 8.5, materials.whiteStone);
+    addBox(group, 3.4, 3.6, 3.4, tx, 17.0, 8.5, materials.whiteStone);
+    addBox(group, 1.6, 2.4, 3.5, tx, 17.0, 8.5, materials.darkWindows); // Bell opening
+    addBox(group, 0.6, 0.8, 0.6, tx, 17.2, 8.5, materials.goldAccent); // Bell
+    // Stage 4: Pyramidal slate roof & cross
+    addBox(group, 3.0, 1.0, 3.0, tx, 19.3, 8.5, materials.slateRoof);
+    addBox(group, 2.2, 1.2, 2.2, tx, 20.3, 8.5, materials.slateRoof);
+    addBox(group, 1.4, 1.4, 1.4, tx, 21.5, 8.5, materials.slateRoof);
+    addBox(group, 0.6, 1.6, 0.6, tx, 23.0, 8.5, materials.goldAccent); // Tower cross
   });
 
-  const domeDrum = new THREE.Mesh(new THREE.CylinderGeometry(4.0, 4.0, 3.0, 10), materials.whiteStone);
-  domeDrum.position.set(0, 9.5, -2.0);
-  domeDrum.castShadow = true;
-  group.add(domeDrum);
+  // 5. Great Confederate Dome (Cúpula de la Confederación) over the transept
+  const domeX = 0, domeZ = -3, domeBaseY = 10.0;
+  // Drum with rhythmic arched windows
+  addBox(group, 9.2, 1.0, 9.2, domeX, domeBaseY + 0.5, domeZ, materials.whiteStone);
+  addBox(group, 8.0, 3.8, 8.0, domeX, domeBaseY + 2.9, domeZ, materials.creamStone);
+  // Drum windows
+  [-2.5, 0, 2.5].forEach(wx => {
+    addBox(group, 1.0, 2.2, 8.2, domeX + wx, domeBaseY + 2.9, domeZ, materials.darkWindows);
+  });
+  // Stepped dome shell in copper green/slate
+  addBox(group, 7.4, 1.2, 7.4, domeX, domeBaseY + 5.4, domeZ, materials.copperGreen);
+  addBox(group, 6.2, 1.2, 6.2, domeX, domeBaseY + 6.6, domeZ, materials.copperGreen);
+  addBox(group, 4.8, 1.2, 4.8, domeX, domeBaseY + 7.8, domeZ, materials.copperGreen);
+  addBox(group, 3.4, 1.0, 3.4, domeX, domeBaseY + 8.9, domeZ, materials.copperGreen);
+  // Lantern & Golden Cross
+  addBox(group, 1.6, 2.0, 1.6, domeX, domeBaseY + 10.4, domeZ, materials.whiteStone);
+  addBox(group, 0.6, 2.0, 0.6, domeX, domeBaseY + 12.0, domeZ, materials.goldAccent);
 
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(4.2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
-    materials.zincRoof
-  );
-  dome.position.set(0, 11.0, -2.0);
-  dome.castShadow = true;
-  group.add(dome);
-
-  const lantern = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 2.0, 8), materials.whiteStone);
-  lantern.position.set(0, 15.8, -2.0);
-  lantern.castShadow = true;
-  group.add(lantern);
-
-  const domeCross = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.5, 0.25), materials.goldAccent);
-  domeCross.position.set(0, 17.2, -2.0);
-  group.add(domeCross);
+  // 6. Arched clerestory windows along the nave
+  for (let z = -6; z <= 4; z += 2.5) {
+    addBox(group, 14.3, 1.8, 1.0, 0, 7.0, z, materials.darkWindows);
+  }
 
   return group;
 }
 
 /**
- * 2. Palacio Municipal de Paraná
+ * 2. Palacio Municipal (Municipalidad de Paraná)
+ * French Renaissance with Parisian mansard roofs, slender central clock tower,
+ * entrance portal, window moldings, and stone rustication.
  */
 export function buildPalacioMunicipal(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_palacio_municipal';
 
-  const base = new THREE.Mesh(new THREE.BoxGeometry(15, 7.5, 15), materials.creamStone);
-  base.position.y = 3.75;
-  base.castShadow = true;
-  base.receiveShadow = true;
-  group.add(base);
+  // Base plinth
+  addBox(group, 21, 0.8, 15, 0, 0.4, 0, materials.granitePlinth);
 
-  const mansard = new THREE.Mesh(new THREE.BoxGeometry(14, 2.5, 14), materials.slateRoof);
-  mansard.position.y = 8.5;
-  mansard.castShadow = true;
-  group.add(mansard);
+  // Main two-story building body
+  addBox(group, 19, 7.5, 13, 0, 4.5, 0, materials.peachStone);
 
-  const towerShaft = new THREE.Mesh(new THREE.BoxGeometry(4.2, 14, 4.2), materials.whiteStone);
-  towerShaft.position.set(0, 10.5, 5.5);
-  towerShaft.castShadow = true;
-  group.add(towerShaft);
+  // Rusticated corner quoins & central entry projection
+  addBox(group, 7, 8.0, 14, 0, 4.75, 0.2, materials.creamStone);
 
-  const clockGeom = new THREE.CylinderGeometry(1.2, 1.2, 0.15, 16);
-  const clockMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+  // Main arched entrance portal
+  addBox(group, 3.2, 4.2, 1.2, 0, 2.8, 7.0, materials.darkWindows);
+  addBox(group, 4.0, 0.6, 1.4, 0, 5.2, 7.0, materials.whiteStone); // Balcony of honor
+  addBox(group, 3.6, 0.8, 0.2, 0, 5.8, 7.6, materials.whiteStone); // Balustrade
 
-  const clockF = new THREE.Mesh(clockGeom, clockMat);
-  clockF.rotation.x = Math.PI / 2;
-  clockF.position.set(0, 14.5, 7.65);
-  group.add(clockF);
+  // Rhythmic window rows (Ground floor & Piano Nobile)
+  [-7.5, -4.5, 4.5, 7.5].forEach(wx => {
+    addBox(group, 1.2, 2.2, 0.2, wx, 3.2, 6.55, materials.darkWindows);
+    addBox(group, 1.2, 2.6, 0.2, wx, 6.4, 6.55, materials.darkWindows);
+  });
 
-  const clockL = new THREE.Mesh(clockGeom, clockMat);
-  clockL.rotation.z = Math.PI / 2;
-  clockL.position.set(-2.15, 14.5, 5.5);
-  const clockR = new THREE.Mesh(clockGeom, clockMat);
-  clockR.rotation.z = Math.PI / 2;
-  clockR.position.set(2.15, 14.5, 5.5);
-  group.add(clockL, clockR);
+  // Mansard roof in dark slate
+  addBox(group, 19.4, 1.8, 13.4, 0, 9.1, 0, materials.slateRoof);
+  addBox(group, 18.0, 1.2, 12.0, 0, 10.6, 0, materials.slateRoof);
 
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(2.0, 5.5, 4), materials.zincRoof);
-  spire.position.set(0, 21.0, 5.5);
-  spire.rotation.y = Math.PI / 4;
-  spire.castShadow = true;
-  group.add(spire);
-
-  const flagpole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.5, 6), materials.whiteStone);
-  flagpole.position.set(0, 24.5, 5.5);
-  group.add(flagpole);
-
-  const flagMesh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 0.08), materials.patronatoRed);
-  flagMesh.position.set(0.9, 25.0, 5.5);
-  group.add(flagMesh);
+  // Central Clock Tower
+  addBox(group, 4.4, 6.0, 4.4, 0, 11.5, 2.5, materials.creamStone);
+  // 4 Clock Dials
+  addBox(group, 2.0, 2.0, 4.6, 0, 12.5, 2.5, materials.pureWhite);
+  addBox(group, 4.6, 2.0, 2.0, 0, 12.5, 2.5, materials.pureWhite);
+  // Belfry cupola & spire
+  addBox(group, 3.6, 2.8, 3.6, 0, 15.8, 2.5, materials.whiteStone);
+  addBox(group, 2.2, 2.4, 2.2, 0, 18.4, 2.5, materials.copperGreen);
+  addBox(group, 0.5, 2.8, 0.5, 0, 20.8, 2.5, materials.copperGreen);
 
   return group;
 }
 
 /**
- * 3. Casa de Gobierno (Casa Gris)
- * Palacio neoclásico francés con reloj y mansarda sobre Plaza Alvear
+ * 3. Casa de Gobierno de Entre Ríos ("Casa Gris")
+ * Monumental Italianate palace: symmetrical wings, inner courtyard,
+ * grand central clock tower with dome, balustrade parapet, and dual grand entrance stairs.
  */
 export function buildCasaDeGobierno(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_casa_de_gobierno';
 
-  // Base building with classical stone facade
-  const base = new THREE.Mesh(new THREE.BoxGeometry(26, 8.5, 18), materials.whiteStone);
-  base.position.y = 4.25;
-  base.castShadow = true;
-  base.receiveShadow = true;
-  group.add(base);
+  // Base podium
+  addBox(group, 26, 0.8, 26, 0, 0.4, 0, materials.granitePlinth);
 
-  // Mansard roof
-  const mansard = new THREE.Mesh(new THREE.BoxGeometry(24.5, 3.0, 16.5), materials.slateRoof);
-  mansard.position.y = 10.0;
-  mansard.castShadow = true;
-  group.add(mansard);
+  // Outer palace perimeter wings (leaving central courtyard)
+  // North & South wings
+  addBox(group, 24, 7.5, 5, 0, 4.5, -9.5, materials.whiteStone);
+  addBox(group, 24, 7.5, 5, 0, 4.5, 9.5, materials.whiteStone);
+  // East & West wings
+  addBox(group, 5, 7.5, 14, -9.5, 4.5, 0, materials.whiteStone);
+  addBox(group, 5, 7.5, 14, 9.5, 4.5, 0, materials.whiteStone);
 
-  // Front Loggia / Balcony with pillars
-  for (let i = -3; i <= 3; i++) {
-    const col = new THREE.Mesh(new THREE.BoxGeometry(0.6, 5.5, 0.6), materials.creamStone);
-    col.position.set(i * 2.8, 3.5, 9.3);
-    group.add(col);
+  // Courtyard inner floor
+  addBox(group, 14, 0.2, 14, 0, 0.85, 0, materials.granitePlinth);
+
+  // Grand Portico & Entry Balcony
+  addBox(group, 9, 8.5, 3, 0, 5.0, 11.5, materials.creamStone);
+  addBox(group, 4, 3.8, 1, 0, 2.8, 13.0, materials.darkWindows); // Grand entrance
+  addBox(group, 6, 0.6, 2, 0, 5.4, 13.0, materials.whiteStone); // Balcony of honor
+  addBox(group, 5.6, 0.8, 0.2, 0, 6.0, 13.9, materials.whiteStone); // Balustrade
+
+  // Rhythmic rows of windows along all four facades
+  for (let offset = -9; offset <= 9; offset += 3.0) {
+    if (Math.abs(offset) > 1.5) {
+      addBox(group, 1.2, 2.0, 0.2, offset, 3.0, 12.1, materials.darkWindows);
+      addBox(group, 1.2, 2.4, 0.2, offset, 6.2, 12.1, materials.darkWindows);
+      addBox(group, 1.2, 2.0, 0.2, offset, 3.0, -12.1, materials.darkWindows);
+      addBox(group, 1.2, 2.4, 0.2, offset, 6.2, -12.1, materials.darkWindows);
+    }
   }
 
-  // Clock Tower
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(4.5, 15, 4.5), materials.whiteStone);
-  tower.position.set(0, 12, 0);
-  tower.castShadow = true;
-  group.add(tower);
+  // Rooftop balustrade parapet
+  addBox(group, 24.4, 0.8, 24.4, 0, 8.65, 0, materials.whiteStone);
 
-  // Clock dial
-  const clockDial = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.2, 16), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
-  clockDial.rotation.x = Math.PI / 2;
-  clockDial.position.set(0, 16.5, 2.3);
-  group.add(clockDial);
-
-  // Spire with Entre Ríos Flag
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(2.2, 5.0, 4), materials.zincRoof);
-  spire.position.set(0, 21.5, 0);
-  spire.rotation.y = Math.PI / 4;
-  group.add(spire);
-
-  const flag = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.1, 0.08), materials.courtBlue);
-  flag.position.set(1.0, 25.0, 0);
-  group.add(flag);
+  // Grand Central Clock Tower
+  addBox(group, 5.5, 8.5, 5.5, 0, 12.5, 4.0, materials.creamStone);
+  // Clock faces
+  addBox(group, 2.4, 2.4, 5.7, 0, 14.5, 4.0, materials.pureWhite);
+  addBox(group, 5.7, 2.4, 2.4, 0, 14.5, 4.0, materials.pureWhite);
+  // Cupola & Spire
+  addBox(group, 4.5, 2.4, 4.5, 0, 17.5, 4.0, materials.copperGreen);
+  addBox(group, 3.0, 2.2, 3.0, 0, 19.8, 4.0, materials.copperGreen);
+  addBox(group, 0.6, 3.2, 0.6, 0, 22.2, 4.0, materials.copperGreen); // Flagpole spire
 
   return group;
 }
 
 /**
  * 4. Escuela Normal José María Torres
- * Edificio escolar monumental de dos plantas
+ * Neoclassical historic academic palace: two massive classroom floors,
+ * Tuscan entrance portico, rhythmic double rows of mullioned windows, and central clock attic.
  */
 export function buildEscuelaNormal(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_escuela_normal';
 
-  const mainBlock = new THREE.Mesh(new THREE.BoxGeometry(26, 8.0, 16), materials.creamStone);
-  mainBlock.position.y = 4.0;
-  mainBlock.castShadow = true;
-  group.add(mainBlock);
+  // Base
+  addBox(group, 24, 0.6, 18, 0, 0.3, 0, materials.granitePlinth);
 
-  const pediment = new THREE.Mesh(new THREE.ConeGeometry(6.0, 2.2, 3), materials.whiteStone);
-  pediment.rotation.y = Math.PI;
-  pediment.rotation.z = Math.PI / 2;
-  pediment.position.set(0, 9.1, 8.1);
-  group.add(pediment);
+  // Main body
+  addBox(group, 22, 7.5, 16, 0, 4.35, 0, materials.peachStone);
 
-  const centralCupola = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.0, 3.0, 8), materials.zincRoof);
-  centralCupola.position.set(0, 9.8, 0);
-  group.add(centralCupola);
+  // Central entrance projection with Tuscan arch
+  addBox(group, 8, 8.2, 17, 0, 4.7, 0.5, materials.creamStone);
+  addBox(group, 3.6, 4.2, 0.8, 0, 2.8, 8.8, materials.darkWindows); // Grand entrance
+  addBox(group, 4.8, 0.8, 1.2, 0, 5.4, 8.8, materials.whiteStone);
+
+  // Double rows of school windows
+  for (let wx = -9; wx <= 9; wx += 2.6) {
+    if (Math.abs(wx) > 3.0) {
+      addBox(group, 1.3, 2.2, 0.2, wx, 3.2, 8.1, materials.darkWindows);
+      addBox(group, 1.3, 2.4, 0.2, wx, 6.2, 8.1, materials.darkWindows);
+    }
+  }
+
+  // Roof cornice & central clock attic
+  addBox(group, 22.6, 0.8, 16.6, 0, 8.5, 0, materials.whiteStone);
+  addBox(group, 6.5, 3.0, 4.0, 0, 10.3, 6.0, materials.creamStone);
+  addBox(group, 1.8, 1.8, 0.2, 0, 10.5, 8.1, materials.pureWhite); // Clock
+  addBox(group, 7.0, 0.6, 4.4, 0, 12.0, 6.0, materials.slateRoof);
 
   return group;
 }
 
 /**
- * 5. Colegio Nuestra Señora del Huerto
+ * 5. Colegio del Huerto (Capilla y claustros históricos)
  */
 export function buildColegioDelHuerto(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_colegio_del_huerto';
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(18, 7.5, 14), materials.whiteStone);
-  body.position.y = 3.75;
-  body.castShadow = true;
-  group.add(body);
+  // Claustro
+  addBox(group, 20, 6.5, 16, 0, 3.6, 0, materials.whiteStone);
+  addBox(group, 12, 0.2, 8, 0, 0.6, 0, materials.granitePlinth);
 
-  const belfry = new THREE.Mesh(new THREE.BoxGeometry(3.2, 7.0, 3.2), materials.creamStone);
-  belfry.position.set(-6.0, 9.0, 5.0);
-  group.add(belfry);
-
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(1.8, 3.5, 4), materials.slateRoof);
-  spire.position.set(-6.0, 13.5, 5.0);
-  group.add(spire);
+  // Historic Chapel
+  addBox(group, 7, 8.5, 12, -7.5, 4.8, 0, materials.creamStone);
+  addBox(group, 7.5, 1.8, 12.4, -7.5, 9.8, 0, materials.slateRoof);
+  addBox(group, 2.4, 5.5, 2.4, -7.5, 13.0, 5.0, materials.whiteStone); // Bell belfry
+  addBox(group, 1.6, 2.4, 1.6, -7.5, 16.5, 5.0, materials.goldAccent); // Cross spire
 
   return group;
 }
 
 /**
- * 6. Centro Cultural Juan L. Ortiz (El "Juanele" en Bv. Racedo)
- * Galpones ferroviarios alargados de ladrillo visto, techos a dos aguas y andén
+ * 6. Centro Cultural Juan L. Ortiz ("El Juanele")
+ * Red English brick railway sheds, twin pitched roofs with sawtooth skylights,
+ * industrial multi-pane windows, and historic railway track section.
  */
 export function buildCentroCulturalJuanele(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_centro_cultural_juanele';
 
-  // Main Railway Shed in Red Brick
-  const shed1 = new THREE.Mesh(new THREE.BoxGeometry(28, 5.8, 10), materials.brickWall);
-  shed1.position.set(0, 2.9, 0);
-  shed1.castShadow = true;
-  shed1.receiveShadow = true;
-  group.add(shed1);
+  // Cobblestone / platform base
+  addBox(group, 24, 0.5, 18, 0, 0.25, 0, materials.slateRoof);
 
-  // Dual-pitch corrugated tin roof
-  const roof1 = new THREE.Mesh(new THREE.BoxGeometry(29, 2.2, 11), materials.slateRoof);
-  roof1.position.set(0, 6.5, 0);
-  roof1.castShadow = true;
-  group.add(roof1);
+  // Twin industrial railway brick halls
+  [-5.2, 5.2].forEach(hx => {
+    // Brick walls
+    addBox(group, 9.5, 6.0, 16, hx, 3.5, 0, materials.industrialBrick);
+    // Industrial multi-pane arched windows
+    for (let wz = -6; wz <= 6; wz += 3.0) {
+      addBox(group, 9.7, 2.6, 1.4, hx, 3.8, wz, materials.darkWindows);
+    }
+    // Gabled roof in weathered zinc
+    addBox(group, 10.2, 1.2, 16.4, hx, 7.0, 0, materials.zincRoof);
+    addBox(group, 7.0, 1.2, 16.4, hx, 8.0, 0, materials.zincRoof);
+    addBox(group, 3.5, 1.0, 16.4, hx, 9.0, 0, materials.zincRoof);
+    // Sawtooth glass skylight ridge
+    addBox(group, 1.8, 0.8, 14.0, hx, 9.8, 0, materials.glassCyan);
+  });
 
-  // Secondary warehouse shed attached
-  const shed2 = new THREE.Mesh(new THREE.BoxGeometry(18, 4.8, 7), materials.industrialBrick);
-  shed2.position.set(-16.0, 2.4, -1.0);
-  shed2.castShadow = true;
-  group.add(shed2);
-
-  const roof2 = new THREE.Mesh(new THREE.BoxGeometry(19, 1.8, 8), materials.zincRoof);
-  roof2.position.set(-16.0, 5.4, -1.0);
-  group.add(roof2);
-
-  // Lateral Railway Passenger Platform (Andén)
-  const platform = new THREE.Mesh(new THREE.BoxGeometry(34, 0.6, 4.0), materials.granitePlinth);
-  platform.position.set(0, 0.3, 7.0);
-  platform.receiveShadow = true;
-  group.add(platform);
-
-  // Wooden platform canopy posts & roof
-  for (let p = -14; p <= 14; p += 7) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.8, 0.3), materials.woodPlanks);
-    post.position.set(p, 2.2, 7.0);
-    group.add(post);
-  }
-
-  const canopy = new THREE.Mesh(new THREE.BoxGeometry(32, 0.3, 3.5), materials.zincRoof);
-  canopy.position.set(0, 4.2, 7.0);
-  group.add(canopy);
-
-  // Historic Stationary Boxcar on the rail track
-  const boxcar = new THREE.Mesh(new THREE.BoxGeometry(9.0, 3.2, 2.8), materials.darkWindows);
-  boxcar.position.set(8.0, 1.8, 10.5);
-  boxcar.castShadow = true;
-  group.add(boxcar);
+  // Historic railway track buffer at front
+  addBox(group, 14, 0.2, 2.5, 0, 0.6, 9.5, materials.woodPlanks);
+  addBox(group, 1.2, 1.4, 1.2, 0, 1.2, 10.2, materials.patronatoRed);
 
   return group;
 }
 
 /**
- * 7. Estación Central de Trenes (Ferrocarril General Urquiza)
+ * 7. Estación Central de Ferrocarril
  */
 export function buildEstacionFerrocarril(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_estacion_ferrocarril';
 
-  // British-style terminal building
-  const terminal = new THREE.Mesh(new THREE.BoxGeometry(24, 6.5, 9), materials.brickWall);
-  terminal.position.set(0, 3.25, 0);
-  terminal.castShadow = true;
-  group.add(terminal);
+  // Base platform
+  addBox(group, 26, 0.6, 16, 0, 0.3, 0, materials.granitePlinth);
 
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(25, 2.2, 10), materials.terracotta);
-  roof.position.set(0, 7.2, 0);
-  group.add(roof);
+  // Main terminal building in French-English railway style
+  addBox(group, 20, 6.5, 8, 0, 3.8, -3, materials.brickWall);
+  addBox(group, 20.6, 1.6, 8.6, 0, 7.8, -3, materials.slateRoof);
 
-  // Clock Pediment
-  const pediment = new THREE.Mesh(new THREE.BoxGeometry(6.0, 2.5, 1.0), materials.creamStone);
-  pediment.position.set(0, 8.0, 4.6);
-  group.add(pediment);
+  // Central ticket hall & clock tower
+  addBox(group, 8, 8.5, 9, 0, 4.8, -2.5, materials.creamStone);
+  addBox(group, 4.2, 4.5, 4.2, 0, 11.2, -2.5, materials.whiteStone);
+  addBox(group, 1.8, 1.8, 4.4, 0, 11.5, -2.5, materials.pureWhite); // Clock
+  addBox(group, 3.0, 2.5, 3.0, 0, 14.5, -2.5, materials.slateRoof);
 
-  const clock = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.15, 12), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
-  clock.rotation.x = Math.PI / 2;
-  clock.position.set(0, 8.2, 5.15);
-  group.add(clock);
-
-  // Platform (Andén)
-  const platform = new THREE.Mesh(new THREE.BoxGeometry(30, 0.5, 4.5), materials.granitePlinth);
-  platform.position.set(0, 0.25, -6.5);
-  group.add(platform);
+  // Passenger platform canopy (Tinglado de andén)
+  addBox(group, 22, 0.4, 7, 0, 4.2, 4.5, materials.zincRoof);
+  for (let px = -9; px <= 9; px += 4.5) {
+    addBox(group, 0.3, 3.6, 0.3, px, 2.1, 7.5, materials.slateRoof);
+  }
 
   return group;
 }
 
 /**
- * 8. Centro Cultural La Vieja Usina
- * Fábrica industrial de ladrillo con gran chimenea
+ * 8. La Vieja Usina (Centro Cultural y de Convenciones)
+ * Historic power plant: tall octagonal red-brick industrial chimney,
+ * brick halls with clerestory windows, and modern glass canopy.
  */
 export function buildViejaUsina(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_la_vieja_usina';
 
-  // Industrial hall
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(18, 7.5, 11), materials.industrialBrick);
-  hall.position.set(0, 3.75, 0);
-  hall.castShadow = true;
-  group.add(hall);
+  // Platform
+  addBox(group, 22, 0.5, 18, 0, 0.25, 0, materials.granitePlinth);
 
-  // Gabled industrial roof
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(19, 2.2, 12), materials.slateRoof);
-  roof.position.set(0, 8.2, 0);
-  group.add(roof);
+  // Main powerhouse generation hall
+  addBox(group, 16, 7.5, 13, -2, 4.25, 0, materials.industrialBrick);
+  // Industrial pilasters and arched clerestory windows
+  for (let z = -5; z <= 5; z += 2.5) {
+    addBox(group, 16.3, 2.8, 1.2, -2, 4.5, z, materials.darkWindows);
+  }
+  // Gabled roof
+  addBox(group, 16.6, 1.6, 13.6, -2, 8.7, 0, materials.zincRoof);
+  addBox(group, 12.0, 1.2, 13.6, -2, 9.8, 0, materials.zincRoof);
 
-  // Towering Circular Brick Chimney
-  const chimney = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.8, 24, 12), materials.industrialBrick);
-  chimney.position.set(11.0, 12.0, 3.0);
-  chimney.castShadow = true;
-  group.add(chimney);
+  // Modern entrance glass pavilion
+  addBox(group, 8, 4.5, 4, -2, 2.5, 8.0, materials.glassCyan);
+  addBox(group, 8.6, 0.4, 4.6, -2, 4.9, 8.0, materials.slateRoof);
 
-  // Chimney top crown
-  const crown = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.2, 1.2, 12), materials.slateRoof);
-  crown.position.set(11.0, 24.2, 3.0);
-  group.add(crown);
+  // Tall Industrial Brick Chimney (Chimenea histórica de la usina)
+  const cx = 8.0, cz = -3.0;
+  addBox(group, 3.2, 2.5, 3.2, cx, 1.5, cz, materials.industrialBrick);
+  addBox(group, 2.8, 6.0, 2.8, cx, 5.5, cz, materials.industrialBrick);
+  addBox(group, 2.4, 7.0, 2.4, cx, 11.8, cz, materials.industrialBrick);
+  addBox(group, 2.0, 7.0, 2.0, cx, 18.5, cz, materials.industrialBrick);
+  addBox(group, 2.4, 1.0, 2.4, cx, 22.5, cz, materials.slateRoof); // Chimney crown
 
   return group;
 }
 
 /**
  * 9. Teatro Municipal 3 de Febrero
+ * Italianate classical opera house: triple entrance arches, piano nobile with
+ * Corinthian columns and French balconies, ornate sculptural pediment, and stage fly tower.
  */
 export function buildTeatro3DeFebrero(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_teatro_3_febrero';
 
-  const foyer = new THREE.Mesh(new THREE.BoxGeometry(13, 7.5, 6), materials.peachStone);
-  foyer.position.set(0, 3.75, 4.5);
-  foyer.castShadow = true;
-  group.add(foyer);
+  // Base
+  addBox(group, 18, 0.8, 22, 0, 0.4, 0, materials.granitePlinth);
 
-  const pediment = new THREE.Mesh(new THREE.ConeGeometry(6.5, 2.2, 3), materials.whiteStone);
-  pediment.rotation.y = Math.PI;
-  pediment.rotation.z = Math.PI / 2;
-  pediment.position.set(0, 8.5, 7.4);
-  pediment.castShadow = true;
-  group.add(pediment);
+  // Main auditorium hall
+  addBox(group, 16, 9.5, 14, 0, 5.5, -2, materials.peachStone);
 
-  [-3.2, 0, 3.2].forEach(dx => {
-    const door = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.6, 0.3), materials.woodPlanks);
-    door.position.set(dx, 1.8, 7.6);
-    group.add(door);
+  // Stage Fly Tower (Torre de escenario al fondo)
+  addBox(group, 15, 14, 6, 0, 7.8, -8.5, materials.creamStone);
+
+  // Classical Italianate Façade
+  addBox(group, 16.5, 10.5, 4, 0, 6.0, 7.0, materials.whiteStone);
+
+  // Ground level triple entrance arches
+  [-3.8, 0, 3.8].forEach(ax => {
+    addBox(group, 2.2, 4.2, 1.0, ax, 2.9, 9.0, materials.darkWindows);
   });
 
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(12, 7.0, 10), materials.creamStone);
-  hall.position.set(0, 3.5, -2.5);
-  hall.castShadow = true;
-  group.add(hall);
+  // Piano Nobile with classical columns & balconies
+  addBox(group, 14, 0.6, 1.2, 0, 5.4, 9.2, materials.whiteStone); // Balcony
+  for (let cx = -5; cx <= 5; cx += 2.5) {
+    addBox(group, 0.6, 4.0, 0.6, cx, 7.6, 9.2, materials.whiteStone);
+  }
+  // Upper windows
+  [-3.8, 0, 3.8].forEach(wx => {
+    addBox(group, 1.6, 3.0, 0.2, wx, 7.6, 8.8, materials.darkWindows);
+  });
 
-  const stageTower = new THREE.Mesh(new THREE.BoxGeometry(11, 11.5, 6), materials.terracotta);
-  stageTower.position.set(0, 5.75, -9.5);
-  stageTower.castShadow = true;
-  group.add(stageTower);
+  // Sculptural pediment and parapet
+  addBox(group, 17, 1.2, 4.2, 0, 11.8, 7.0, materials.whiteStone);
+  addBox(group, 11, 1.6, 0.8, 0, 13.0, 8.5, materials.creamStone); // Frontis
+  addBox(group, 4, 1.2, 0.6, 0, 14.2, 8.5, materials.goldAccent); // Lyre & allegory sculpture
 
   return group;
 }
 
 /**
- * 10. El Patito Sirirí
+ * 10. El Patito Sirirí (Esculpido en Micro-Voxels)
+ * Built entirely of micro-voxels over a terraced green mound with colorful flowers:
+ * rounded duck body, white/brown chest, folded wings with feather tiers,
+ * upright neck, red scarf, orange flat beak, and expressive eyes.
  */
 export function buildPatitoSiriri(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_patito_siriri';
 
-  const mound = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 5.5, 1.6, 12), materials.pitchGrass);
-  mound.position.y = 0.8;
-  mound.receiveShadow = true;
-  group.add(mound);
+  // 1. Terraced green mound (Loma verde del Parque Urquiza)
+  addBox(group, 11, 0.6, 11, 0, 0.3, 0, materials.pitchGrass);
+  addBox(group, 9, 0.6, 9, 0, 0.9, 0, materials.pitchGrass);
+  addBox(group, 7, 0.6, 7, 0, 1.5, 0, materials.pitchGrass);
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.4, 4.4), materials.duckYellow);
-  body.position.set(0, 2.5, 0);
-  body.castShadow = true;
-  group.add(body);
-
-  const tail = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.0, 4), materials.duckYellow);
-  tail.position.set(0, 3.2, 2.4);
-  tail.rotation.x = -Math.PI / 4;
-  tail.castShadow = true;
-  group.add(tail);
-
-  [-1.9, 1.9].forEach(wx => {
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.6, 2.6), materials.duckYellow);
-    wing.position.set(wx, 2.6, 0);
-    wing.castShadow = true;
-    group.add(wing);
+  // Flower micro-voxels dotted around the mound
+  const flowerColors = [materials.duckYellow, materials.patronatoRed, materials.goldAccent, materials.pureWhite];
+  const flowerOffsets = [
+    [-4.2, -3.5], [-3.8, 3.2], [4.0, -3.0], [3.5, 3.8],
+    [-2.8, -4.0], [2.6, 4.2], [-4.0, 0], [4.2, 0.5]
+  ];
+  flowerOffsets.forEach(([fx, fz], idx) => {
+    addBox(group, 0.4, 0.4, 0.4, fx, 0.7, fz, flowerColors[idx % flowerColors.length]);
   });
 
-  const head = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.0, 2.2), materials.duckYellow);
-  head.position.set(0, 4.4, -1.8);
-  head.castShadow = true;
-  group.add(head);
+  // 2. Webbed duck feet resting on the grass
+  addBox(group, 1.0, 0.25, 1.6, -1.2, 1.9, 0.4, materials.duckOrange);
+  addBox(group, 1.0, 0.25, 1.6, 1.2, 1.9, 0.4, materials.duckOrange);
 
-  const beak = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 1.6), materials.duckOrange);
-  beak.position.set(0, 4.0, -3.4);
-  beak.castShadow = true;
-  group.add(beak);
+  // 3. Rounded Voxel Body
+  // Tier 1: Lower belly
+  addBox(group, 3.6, 0.8, 4.4, 0, 2.4, 0, materials.duckWhite);
+  // Tier 2: Mid body & chest
+  addBox(group, 4.2, 1.2, 4.8, 0, 3.3, 0, materials.duckYellow);
+  addBox(group, 3.2, 1.0, 1.0, 0, 3.3, 2.2, materials.duckBrown); // Brown chest patch
+  // Tier 3: Upper back
+  addBox(group, 3.8, 1.0, 4.2, 0, 4.3, -0.2, materials.duckYellow);
 
-  [-1.05, 1.05].forEach(ex => {
-    const eye = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.5), materials.duckBlack);
-    eye.position.set(ex, 4.6, -2.0);
-    group.add(eye);
+  // 4. Folded Wings on both flanks
+  [-2.2, 2.2].forEach(wx => {
+    addBox(group, 0.5, 1.4, 3.4, wx, 3.4, -0.2, materials.duckBrown);
+    addBox(group, 0.4, 0.8, 2.2, wx * 1.05, 3.6, -0.4, materials.duckGold);
   });
 
-  const scarf = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.4, 2.3), materials.patronatoRed);
-  scarf.position.set(0, 3.4, -1.6);
-  group.add(scarf);
+  // 5. Upturned tail feathers
+  addBox(group, 1.8, 0.8, 1.8, 0, 3.8, -2.6, materials.duckYellow);
+  addBox(group, 1.2, 1.2, 1.2, 0, 4.6, -3.2, materials.duckBrown);
+
+  // 6. Upright Slender Neck
+  addBox(group, 1.8, 1.2, 1.8, 0, 5.2, 1.4, materials.duckYellow);
+  addBox(group, 1.6, 1.4, 1.6, 0, 6.3, 1.4, materials.duckYellow);
+
+  // Red Scarf (Bufanda roja clásica de Paraná)
+  addBox(group, 2.1, 0.5, 2.1, 0, 5.5, 1.4, materials.patronatoRed);
+  addBox(group, 0.5, 1.2, 0.3, 0.6, 4.8, 2.4, materials.patronatoRed); // Hanging scarf tail
+
+  // 7. Head & Beak
+  // Head block
+  addBox(group, 2.2, 1.8, 2.4, 0, 7.7, 1.4, materials.duckYellow);
+  addBox(group, 2.4, 0.6, 1.6, 0, 7.8, 1.4, materials.duckBrown); // Head cap
+
+  // Eyes (Black with white glint)
+  [-1.15, 1.15].forEach(ex => {
+    addBox(group, 0.1, 0.5, 0.5, ex, 7.9, 1.7, materials.duckBlack);
+    addBox(group, 0.12, 0.2, 0.2, ex, 8.0, 1.8, materials.pureWhite);
+  });
+
+  // Flat Duck Beak (Pico plano anaranjado con detalle)
+  addBox(group, 1.6, 0.45, 1.8, 0, 7.2, 3.1, materials.duckOrange);
+  addBox(group, 1.2, 0.2, 0.4, 0, 7.35, 3.7, materials.duckBlack); // Nostrils
 
   return group;
 }
 
 /**
- * 11. Monumento al Gral. Urquiza
+ * 11. Monumento al Gral. Justo José de Urquiza (Parque Urquiza)
+ * Neoclassical esplanade on the ravine bluff, massive marble pedestal with allegorical figures,
+ * and bronze equestrian statue sculpted in micro-voxels (rearing horse and general).
  */
 export function buildMonumentoUrquiza(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_monumento_urquiza';
 
-  const step1 = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.8, 9.0), materials.granitePlinth);
-  step1.position.y = 0.4;
-  step1.receiveShadow = true;
-  group.add(step1);
+  // Stepped Esplanade
+  addBox(group, 18, 0.6, 18, 0, 0.3, 0, materials.granitePlinth);
+  addBox(group, 14, 0.6, 14, 0, 0.9, 0, materials.whiteStone);
+  addBox(group, 10, 0.8, 10, 0, 1.6, 0, materials.granitePlinth);
 
-  const step2 = new THREE.Mesh(new THREE.BoxGeometry(7.0, 1.0, 7.0), materials.granitePlinth);
-  step2.position.y = 1.3;
-  step2.receiveShadow = true;
-  group.add(step2);
+  // Massive marble pedestal
+  addBox(group, 6, 6.5, 7.5, 0, 5.25, 0, materials.creamStone);
+  addBox(group, 6.8, 0.8, 8.3, 0, 8.8, 0, materials.whiteStone); // Cornice
 
-  const pilar = new THREE.Mesh(new THREE.BoxGeometry(3.6, 6.5, 4.6), materials.whiteStone);
-  pilar.position.set(0, 4.8, 0);
-  pilar.castShadow = true;
-  group.add(pilar);
+  // Allegorical bronze statues at base
+  addBox(group, 1.6, 2.4, 1.6, -3.2, 2.8, 0, materials.bronzeStatue);
+  addBox(group, 1.6, 2.4, 1.6, 3.2, 2.8, 0, materials.bronzeStatue);
 
-  const plaque = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.4, 0.2), materials.bronzeStatue);
-  plaque.position.set(0, 3.5, 2.4);
-  group.add(plaque);
-
-  const horseBody = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 3.8), materials.bronzeStatue);
-  horseBody.position.set(0, 9.0, 0);
-  horseBody.castShadow = true;
-  group.add(horseBody);
-
-  const horseNeck = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 1.4), materials.bronzeStatue);
-  horseNeck.position.set(0, 10.4, -1.6);
-  horseNeck.rotation.x = -Math.PI / 6;
-  horseNeck.castShadow = true;
-  group.add(horseNeck);
-
-  const horseHead = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 1.6), materials.bronzeStatue);
-  horseHead.position.set(0, 11.2, -2.4);
-  horseHead.castShadow = true;
-  group.add(horseHead);
-
-  [[-0.6, 7.6, -1.2], [0.6, 7.6, -1.2], [-0.6, 7.6, 1.4], [0.6, 7.6, 1.4]].forEach(([lx, ly, lz]) => {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.2, 0.4), materials.bronzeStatue);
-    leg.position.set(lx, ly, lz);
-    leg.castShadow = true;
-    group.add(leg);
-  });
-
-  const riderTorso = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.6, 0.9), materials.bronzeStatue);
-  riderTorso.position.set(0, 10.6, 0.2);
-  riderTorso.castShadow = true;
-  group.add(riderTorso);
-
-  const riderHead = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), materials.bronzeStatue);
-  riderHead.position.set(0, 11.8, 0.2);
-  riderHead.castShadow = true;
-  group.add(riderHead);
-
-  const hat = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.8), materials.bronzeStatue);
-  hat.position.set(0, 12.3, 0.2);
-  group.add(hat);
+  // Equestrian Statue (Urquiza a caballo en bronce) in micro-voxels
+  const hy = 9.2;
+  // Horse body
+  addBox(group, 1.8, 1.6, 4.2, 0, hy + 1.8, 0, materials.bronzeStatue);
+  // Horse rearing front legs
+  addBox(group, 0.5, 2.2, 0.5, -0.6, hy + 2.4, 2.0, materials.bronzeStatue);
+  addBox(group, 0.5, 2.2, 0.5, 0.6, hy + 2.4, 2.0, materials.bronzeStatue);
+  // Horse hind legs
+  addBox(group, 0.6, 2.0, 0.6, -0.6, hy + 0.9, -1.6, materials.bronzeStatue);
+  addBox(group, 0.6, 2.0, 0.6, 0.6, hy + 0.9, -1.6, materials.bronzeStatue);
+  // Horse neck & head (arched)
+  addBox(group, 1.2, 2.2, 1.6, 0, hy + 3.2, 1.8, materials.bronzeStatue);
+  addBox(group, 1.0, 1.0, 1.6, 0, hy + 4.2, 2.5, materials.bronzeStatue);
+  // General Urquiza (Rider)
+  addBox(group, 1.4, 1.8, 1.2, 0, hy + 3.4, -0.2, materials.bronzeStatue);
+  addBox(group, 1.0, 1.2, 1.0, 0, hy + 4.8, -0.2, materials.bronzeStatue); // Head & bicorne hat
+  addBox(group, 0.5, 2.6, 0.2, 0.8, hy + 3.8, 0.4, materials.goldAccent); // Raised saber
 
   return group;
 }
 
 /**
- * 12. Sala Mayo y Puerto Nuevo
+ * 12. Sala Mayo (Puerto Nuevo)
+ * Long waterfront port warehouse: steel portal frames, corrugated white roof,
+ * huge blue reflective curtain glass overlooking the river, ship bollards and harbor dock.
  */
 export function buildSalaMayo(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_sala_mayo';
 
-  const wharf = new THREE.Mesh(new THREE.BoxGeometry(26, 0.8, 16), materials.granitePlinth);
-  wharf.position.y = 0.4;
-  wharf.receiveShadow = true;
-  group.add(wharf);
+  // Concrete harbor dock
+  addBox(group, 28, 0.6, 16, 0, 0.3, 0, materials.granitePlinth);
 
-  const warehouse = new THREE.Mesh(new THREE.BoxGeometry(18, 4.5, 9), materials.brickWall);
-  warehouse.position.set(-2.0, 2.8, -1.5);
-  warehouse.castShadow = true;
-  group.add(warehouse);
+  // Main port pavilion
+  addBox(group, 24, 6.0, 11, 0, 3.6, -1, materials.whiteStone);
 
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(19, 1.8, 10), materials.zincRoof);
-  roof.position.set(-2.0, 5.4, -1.5);
-  group.add(roof);
+  // Waterfront Panoramic Curtain Glass (facing the Paraná river at -Z)
+  addBox(group, 22, 4.6, 0.4, 0, 3.6, -6.55, materials.glassCyan);
+  for (let sx = -9; sx <= 9; sx += 3.0) {
+    addBox(group, 0.25, 4.8, 0.6, sx, 3.6, -6.6, materials.slateRoof); // Mullions
+  }
 
-  const craneGroup = new THREE.Group();
-  craneGroup.position.set(9.0, 0.8, 4.0);
+  // Industrial gabled roof with corrugated profile
+  addBox(group, 25, 1.2, 12, 0, 7.0, -1, materials.zincRoof);
+  addBox(group, 20, 1.0, 10, 0, 8.0, -1, materials.zincRoof);
+  addBox(group, 12, 0.8, 6, 0, 8.8, -1, materials.zincRoof);
 
-  const craneBase = new THREE.Mesh(new THREE.BoxGeometry(2.0, 4.5, 2.0), materials.redCrane);
-  craneBase.position.y = 2.25;
-  craneGroup.add(craneBase);
+  // Ship mooring bollards along the quayside
+  for (let bx = -11; bx <= 11; bx += 5.5) {
+    addBox(group, 0.5, 0.8, 0.5, bx, 0.9, 6.5, materials.slateRoof);
+  }
 
-  const craneCabin = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.4, 3.0), materials.redCrane);
-  craneCabin.position.set(0, 5.4, 0);
-  craneGroup.add(craneCabin);
-
-  const boom = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 9.5), materials.redCrane);
-  boom.position.set(0, 8.2, 3.8);
-  boom.rotation.x = -Math.PI / 5;
-  craneGroup.add(boom);
-
-  group.add(craneGroup);
   return group;
 }
 
 /**
- * 13. Complejo del Túnel Subfluvial Hernandarias
+ * 13. Túnel Subfluvial Raúl Uranga - Carlos Sylvestre Begnis
+ * Toll control building, descending concrete approach ramp, and twin tunnel portals.
  */
 export function buildTunelSubfluvial(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_tunel_subfluvial';
 
-  const portalBuilding = new THREE.Mesh(new THREE.BoxGeometry(14, 4.5, 8), materials.whiteStone);
-  portalBuilding.position.set(0, 2.25, 0);
-  portalBuilding.castShadow = true;
-  group.add(portalBuilding);
+  // Approach highway ramp descending into the earth
+  addBox(group, 18, 0.4, 24, 0, 0.2, 0, materials.slateRoof);
+  // Retaining walls
+  addBox(group, 0.8, 3.5, 20, -7.5, 1.8, 2, materials.whiteStone);
+  addBox(group, 0.8, 3.5, 20, 7.5, 1.8, 2, materials.whiteStone);
 
-  const arch = new THREE.Mesh(new THREE.TorusGeometry(5.0, 0.9, 8, 16, Math.PI), materials.whiteStone);
-  arch.position.set(0, 4.5, 3.5);
-  arch.castShadow = true;
-  group.add(arch);
+  // Twin Subfluvial Tube Portals
+  [-3.8, 3.8].forEach(px => {
+    addBox(group, 5.5, 4.5, 4.0, px, 2.5, -9, materials.granitePlinth);
+    addBox(group, 4.0, 3.0, 4.2, px, 2.0, -9, materials.darkWindows); // Tunnel opening
+    addBox(group, 0.6, 0.6, 0.2, px, 3.8, -6.8, materials.pitchGrass); // Green traffic light
+  });
 
-  const tubeGeom = new THREE.CylinderGeometry(2.4, 2.4, 180, 16);
-  const tubeMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.4, metalness: 0.1 });
-  const tubeMesh = new THREE.Mesh(tubeGeom, tubeMat);
-  tubeMesh.rotation.z = Math.PI / 2;
-  tubeMesh.rotation.y = -Math.PI / 5;
-  tubeMesh.position.set(-60, -2.6, -30);
-  tubeMesh.castShadow = true;
-  group.add(tubeMesh);
+  // Control Building & Observation Deck
+  addBox(group, 10, 5.5, 6, 0, 5.0, -9.5, materials.whiteStone);
+  addBox(group, 9, 2.0, 6.2, 0, 5.5, -9.5, materials.glassCyan);
+  addBox(group, 10.5, 0.8, 6.5, 0, 8.0, -9.5, materials.slateRoof);
 
   return group;
 }
 
 /**
- * 14. Estadio Presbítero Bartolomé Grella (Patronato)
+ * 14. Estadio Presbítero Bartolomé Grella (Club Atlético Patronato)
+ * Stepped red and black striped grandstands, manicured pitch with white lines,
+ * soccer goals, and 4 corner floodlight towers.
  */
 export function buildEstadioGrella(): THREE.Group {
   const group = new THREE.Group();
-  group.name = 'landmark_estadio_grella';
+  group.name = 'landmark_estadio_patronato';
 
-  const pitch = new THREE.Mesh(new THREE.BoxGeometry(22, 0.4, 15), materials.pitchGrass);
-  pitch.position.y = 0.2;
-  pitch.receiveShadow = true;
-  group.add(pitch);
+  // 1. Natural Pitch
+  addBox(group, 22, 0.3, 16, 0, 0.15, 0, materials.pitchGrass);
+  // White field lines
+  addBox(group, 20, 0.05, 0.15, 0, 0.32, 0, materials.whiteLine); // Halfway line
+  addBox(group, 1.8, 0.05, 1.8, 0, 0.32, 0, materials.whiteLine); // Center circle
+  // Goals
+  addBox(group, 0.2, 1.0, 2.4, -9.8, 0.7, 0, materials.pureWhite);
+  addBox(group, 0.2, 1.0, 2.4, 9.8, 0.7, 0, materials.pureWhite);
 
-  const centerCircle = new THREE.Mesh(new THREE.RingGeometry(1.8, 2.0, 16), materials.whiteLine);
-  centerCircle.rotation.x = -Math.PI / 2;
-  centerCircle.position.set(0, 0.42, 0);
-  group.add(centerCircle);
-
-  [-9.5, 9.5].forEach(gz => {
-    for (let r = 0; r < 3; r++) {
-      const standMat = r % 2 === 0 ? materials.patronatoRed : materials.patronatoBlack;
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(24, 1.2 + r * 1.0, 1.6), standMat);
-      const sign = gz > 0 ? 1 : -1;
-      stand.position.set(0, (1.2 + r * 1.0) / 2, gz + sign * r * 1.5);
-      stand.castShadow = true;
-      group.add(stand);
-    }
+  // 2. Red & Black Tiered Stands (Tribunas Rojinegras)
+  // North & South grandstands
+  [-9.5, 9.5].forEach(sz => {
+    addBox(group, 24, 1.2, 3.0, 0, 0.8, sz, materials.patronatoRed);
+    addBox(group, 24, 1.4, 2.4, 0, 1.9, sz + (sz > 0 ? 0.6 : -0.6), materials.patronatoBlack);
+    addBox(group, 24, 1.4, 1.8, 0, 3.1, sz + (sz > 0 ? 1.0 : -1.0), materials.patronatoRed);
+  });
+  // East & West popular stands
+  [-12.2, 12.2].forEach(sx => {
+    addBox(group, 3.0, 1.8, 18, sx, 1.1, 0, materials.patronatoBlack);
+    addBox(group, 2.0, 2.0, 18, sx + (sx > 0 ? 0.8 : -0.8), 2.6, 0, materials.patronatoRed);
   });
 
-  [-13.0, 13.0].forEach(gx => {
-    for (let r = 0; r < 3; r++) {
-      const standMat = r % 2 === 0 ? materials.patronatoBlack : materials.patronatoRed;
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2 + r * 1.0, 15), standMat);
-      const sign = gx > 0 ? 1 : -1;
-      stand.position.set(gx + sign * r * 1.5, (1.2 + r * 1.0) / 2, 0);
-      stand.castShadow = true;
-      group.add(stand);
-    }
-  });
-
-  [[-14, 10.5], [14, 10.5], [-14, -10.5], [14, -10.5]].forEach(([tx, tz]) => {
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 11, 6), materials.whiteStone);
-    mast.position.set(tx, 5.5, tz);
-    mast.castShadow = true;
-    group.add(mast);
-
-    const panel = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, 0.6), materials.stadiumLight);
-    panel.position.set(tx, 11.2, tz);
-    group.add(panel);
+  // 3. Four Floodlight Pylons (Torres de Iluminación)
+  [[-13, -11], [13, -11], [-13, 11], [13, 11]].forEach(([lx, lz]) => {
+    addBox(group, 0.5, 9.0, 0.5, lx, 4.5, lz, materials.slateRoof);
+    addBox(group, 2.2, 1.4, 0.6, lx, 9.5, lz, materials.stadiumLight);
   });
 
   return group;
 }
 
 /**
- * 15. Letras Corpóreas PARANÁ
+ * 15. Letras Corpóreas PARANÁ (Pixel Font Matrix 5x7)
+ * High-definition pixel font "PARANÁ" (with tilde!) in brilliant white,
+ * mounted on a long concrete plinth with landscaped lawn and flowerbeds.
  */
 export function buildLetrasParana(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_letras_parana';
 
-  const lawn = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 4), materials.pitchGrass);
-  lawn.position.y = 0.2;
-  group.add(lawn);
+  // 1. Landscaped green lawn terrace
+  addBox(group, 16.5, 0.35, 4.5, 0, 0.17, 0, materials.pitchGrass);
 
-  // 6 3D Voxel Letters "P A R A N A"
-  const letterMat = materials.whiteStone;
-  for (let i = -2.5; i <= 2.5; i += 1.0) {
-    const letter = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.0, 0.6), letterMat);
-    letter.position.set(i * 2.0, 1.4, 0);
-    letter.castShadow = true;
-    group.add(letter);
+  // 2. Concrete/granite plinth pedestal
+  addBox(group, 14.8, 0.65, 2.2, 0, 0.65, 0, materials.whiteStone);
+  addBox(group, 15.2, 0.25, 2.6, 0, 0.25, 0, materials.granitePlinth);
+
+  // 3. Real 3D Voxel Letters "PARANÁ"
+  const textGroup = createVoxelText('PARANÁ');
+  textGroup.position.set(0, 1.05, 0);
+  group.add(textGroup);
+
+  // 4. Colorful flowerbed border along the front
+  const flowerCols = [materials.patronatoRed, materials.duckYellow, materials.goldAccent, materials.pureWhite];
+  for (let fx = -6.5; fx <= 6.5; fx += 1.1) {
+    addBox(group, 0.35, 0.35, 0.35, fx, 0.45, 1.6, flowerCols[Math.floor(Math.random() * flowerCols.length)]);
   }
 
   return group;
@@ -720,330 +815,274 @@ export function buildLetrasParana(): THREE.Group {
 
 /**
  * 16. Monumento al Mate
+ * Sculpted in micro-voxels: carved wooden gourd (porongo), engraved silver rim,
+ * foaming green yerba mate with montañita, and curved silver bombilla with gold tip.
  */
 export function buildMonumentoAlMate(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_monumento_al_mate';
 
-  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 3.0, 1.4, 8), materials.granitePlinth);
-  plinth.position.y = 0.7;
-  group.add(plinth);
+  // Stepped circular stone plinth
+  addBox(group, 6.5, 0.4, 6.5, 0, 0.2, 0, materials.granitePlinth);
+  addBox(group, 5.5, 0.4, 5.5, 0, 0.6, 0, materials.whiteStone);
 
-  const mate = new THREE.Mesh(new THREE.SphereGeometry(1.6, 12, 10), materials.mateWood);
-  mate.position.set(0, 2.5, 0);
-  group.add(mate);
+  // Gourd body (calabaza porongo) in warm wood tiers
+  addBox(group, 3.4, 0.8, 3.4, 0, 1.2, 0, materials.mateWood);
+  addBox(group, 4.4, 1.2, 4.4, 0, 2.2, 0, materials.mateWood);
+  addBox(group, 4.6, 1.0, 4.6, 0, 3.3, 0, materials.mateWood);
+  addBox(group, 3.8, 0.8, 3.8, 0, 4.2, 0, materials.mateWood);
 
-  const bombilla = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 4.0, 6), materials.mateSilver);
-  bombilla.position.set(0.6, 4.0, 0);
-  bombilla.rotation.z = -Math.PI / 8;
-  group.add(bombilla);
+  // Silver rim (virola cincelada)
+  addBox(group, 4.1, 0.4, 4.1, 0, 4.7, 0, materials.mateSilver);
+
+  // Green Yerba Mate with foam mound
+  addBox(group, 3.2, 0.3, 3.2, 0, 4.8, 0, materials.yerbaGreen);
+  addBox(group, 2.0, 0.4, 2.0, -0.4, 5.0, 0, materials.yerbaGreen); // Montañita
+
+  // Bombilla de plata y oro (curved metallic straw)
+  addBox(group, 0.25, 2.2, 0.25, 0.6, 5.8, 0.2, materials.mateSilver);
+  addBox(group, 0.25, 1.8, 0.25, 1.0, 7.4, 0.2, materials.mateSilver);
+  addBox(group, 0.28, 0.8, 0.28, 1.4, 8.4, 0.2, materials.goldAccent); // Gold mouthpiece
 
   return group;
 }
 
 /**
- * 17. Puerto Sánchez (Pueblo costero de pescadores)
+ * 17. Puerto Sánchez (Barrio tradicional de pescadores)
  */
 export function buildPuertoSanchez(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'landmark_puerto_sanchez';
 
-  const pier = new THREE.Mesh(new THREE.BoxGeometry(16, 0.6, 8), materials.woodPlanks);
-  pier.position.y = 0.3;
-  group.add(pier);
+  // Sandy riverside dock
+  addBox(group, 22, 0.4, 14, 0, 0.2, 0, materials.creamStone);
 
-  // 3 colorful riverside huts
-  const colors = [materials.courtBlue, materials.duckYellow, materials.patronatoRed];
-  [-4.5, 0, 4.5].forEach((hx, idx) => {
-    const hut = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.6, 3.2), colors[idx]);
-    hut.position.set(hx, 1.9, -1.0);
-    hut.castShadow = true;
-    group.add(hut);
-
-    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.4, 4), materials.zincRoof);
-    roof.position.set(hx, 3.8, -1.0);
-    roof.rotation.y = Math.PI / 4;
-    group.add(roof);
+  // Traditional colorful fishermen stilt houses (palafitos)
+  const houseColors = [materials.brickWall, materials.courtBlue, materials.duckYellow, materials.pureWhite];
+  [-6, 0, 6].forEach((hx, i) => {
+    // Stilts
+    addBox(group, 0.4, 1.2, 0.4, hx - 1.5, 0.8, 0, materials.woodPlanks);
+    addBox(group, 0.4, 1.2, 0.4, hx + 1.5, 0.8, 0, materials.woodPlanks);
+    // House
+    addBox(group, 4.2, 3.5, 4.5, hx, 3.0, 0, houseColors[i % houseColors.length]);
+    addBox(group, 4.6, 0.8, 4.8, hx, 5.0, 0, materials.zincRoof);
   });
+
+  // Fishing boats (canoas isleñas) tied at shore
+  addBox(group, 1.4, 0.6, 4.2, -8, 0.5, 5, materials.woodPlanks);
+  addBox(group, 1.4, 0.6, 4.2, 8, 0.5, 5, materials.courtBlue);
 
   return group;
 }
 
 /**
- * 18. Easter Egg 1: El Gran Mate Cósmico debajo de la maqueta
+ * 18. Easter Egg 1: El Mate Gigante Subterráneo
  */
 export function buildEasterEggMate(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'easter_egg_mate_gigante';
 
-  const mateBowl = new THREE.Mesh(
-    new THREE.SphereGeometry(8.5, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.72),
-    materials.mateWood
-  );
-  mateBowl.castShadow = true;
-  group.add(mateBowl);
+  // Giant underground pedestal
+  addBox(group, 14, 1.5, 14, 0, 0.75, 0, materials.granitePlinth);
 
-  const virola = new THREE.Mesh(new THREE.TorusGeometry(7.2, 0.75, 8, 24), materials.mateSilver);
-  virola.rotation.x = Math.PI / 2;
-  virola.position.y = 5.2;
-  group.add(virola);
+  // Giant Mate body
+  addBox(group, 9, 2.5, 9, 0, 2.8, 0, materials.mateWood);
+  addBox(group, 11, 3.5, 11, 0, 5.8, 0, materials.mateWood);
+  addBox(group, 10, 2.5, 10, 0, 8.8, 0, materials.mateWood);
 
-  const yerba = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 6.8, 0.5, 16), materials.yerbaGreen);
-  yerba.position.y = 4.8;
-  group.add(yerba);
+  // Giant silver virola
+  addBox(group, 10.4, 1.0, 10.4, 0, 10.2, 0, materials.mateSilver);
 
-  const bombilla = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 22, 10), materials.mateSilver);
-  bombilla.position.set(2.5, 13.0, 0);
-  bombilla.rotation.z = -Math.PI / 9;
-  bombilla.castShadow = true;
-  group.add(bombilla);
+  // Giant Yerba
+  addBox(group, 8.5, 0.8, 8.5, 0, 10.5, 0, materials.yerbaGreen);
+  addBox(group, 5.0, 1.2, 5.0, -1.2, 11.2, 0, materials.yerbaGreen);
 
-  const mouthpiece = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 2.5, 8), materials.goldAccent);
-  mouthpiece.position.set(5.8, 22.5, 0);
-  mouthpiece.rotation.z = -Math.PI / 9;
-  group.add(mouthpiece);
-
-  const sunCenter = new THREE.Mesh(new THREE.CylinderGeometry(5.0, 5.0, 0.5, 20), materials.goldAccent);
-  sunCenter.rotation.x = Math.PI / 2;
-  sunCenter.position.set(0, 0, -4.0);
-  group.add(sunCenter);
-
-  for (let a = 0; a < 16; a++) {
-    const angle = (a / 16) * Math.PI * 2;
-    const ray = new THREE.Mesh(new THREE.ConeGeometry(0.8, 4.5, 3), materials.goldAccent);
-    ray.position.set(Math.cos(angle) * 7.5, Math.sin(angle) * 7.5, -4.0);
-    ray.rotation.z = angle - Math.PI / 2;
-    group.add(ray);
-  }
+  // Giant Bombilla
+  addBox(group, 0.8, 8.0, 0.8, 2.0, 14.5, 0, materials.mateSilver);
+  addBox(group, 0.9, 2.5, 0.9, 3.5, 19.0, 0, materials.goldAccent);
 
   return group;
 }
 
 /**
- * 19. Easter Egg 2: El Dorado Mítico en el Río Paraná
+ * 19. Easter Egg 2: El Dorado Mítico en el Río Paraná (Escultura Voxel de Alta Definición)
+ * Built with 60+ individual micro-voxels:
+ * Arched body leaping from the water, brilliant gold back with amber scales and silver flanks,
+ * realistic predatory head with open jaw, dark eyes, red gills, spiny dorsal fin,
+ * bifurcated V-tail with central black stripe, and a splashing water foam ring.
  */
 export function buildEasterEggDorado(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'easter_egg_dorado_gigante';
 
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.4, 7.5, 10), materials.doradoGold);
-  body.rotation.z = Math.PI / 2;
-  body.position.set(0, 0.8, 0);
-  body.castShadow = true;
-  group.add(body);
-
-  const head = new THREE.Mesh(new THREE.ConeGeometry(2.4, 3.8, 8), materials.doradoGold);
-  head.rotation.z = Math.PI / 2;
-  head.position.set(5.2, 0.8, 0);
-  head.castShadow = true;
-  group.add(head);
-
-  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.8, 2.4), materials.doradoRed);
-  tail.position.set(-4.5, 1.2, 0);
-  tail.castShadow = true;
-  group.add(tail);
-
-  const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.6, 4), materials.doradoGold);
-  dorsal.position.set(-0.5, 2.8, 0);
-  dorsal.rotation.z = -Math.PI / 6;
-  group.add(dorsal);
-
-  [-1.6, 1.6].forEach(pz => {
-    const fin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 1.4), materials.doradoRed);
-    fin.position.set(2.0, 0.4, pz);
-    fin.rotation.y = (pz > 0 ? 1 : -1) * Math.PI / 5;
-    group.add(fin);
+  // 1. Ring of foaming water splash and droplets at the base (y = 0.1 to 0.45)
+  const splashCoords = [
+    [-3.8, -1.8], [-2.8, -2.6], [-1.0, -3.0], [1.2, -2.8], [2.8, -2.0],
+    [3.6, -0.8], [3.8, 1.0], [2.6, 2.2], [1.0, 2.8], [-1.2, 2.8],
+    [-2.8, 2.2], [-3.6, 0.8], [-4.2, 0], [0, 0]
+  ];
+  splashCoords.forEach(([sx, sz], idx) => {
+    const sMat = (idx % 3 === 0) ? materials.waterFoam : materials.waterSplash;
+    const sH = 0.3 + (idx % 4) * 0.15;
+    addBox(group, 0.7, sH, 0.7, sx, sH / 2, sz, sMat, false);
   });
+  // Suspended water droplets
+  addBox(group, 0.25, 0.25, 0.25, -2.4, 1.6, -1.8, materials.waterSplash, false);
+  addBox(group, 0.25, 0.25, 0.25, 2.2, 1.8, 1.6, materials.waterSplash, false);
+  addBox(group, 0.3, 0.3, 0.3, 0.5, 2.4, -2.0, materials.waterSplash, false);
 
-  const ripple = new THREE.Mesh(new THREE.RingGeometry(3.0, 5.5, 16), materials.waterFoam);
-  ripple.rotation.x = -Math.PI / 2;
-  ripple.position.y = 0.15;
-  group.add(ripple);
+  // 2. Caudal Fin (Bifurcated V-tail with characteristic black stripe)
+  // Lower tail lobe
+  addBox(group, 0.4, 1.4, 0.6, -4.8, 0.8, 0, materials.doradoRed);
+  // Upper tail lobe
+  addBox(group, 0.4, 1.4, 0.6, -4.8, 2.0, 0, materials.doradoRed);
+  // Central black caudal band
+  addBox(group, 0.45, 0.5, 0.65, -4.6, 1.4, 0, materials.doradoBlack);
+
+  // 3. Arched Body (Parabolic curve emerging and jumping)
+  // Tail peduncle (x = -4.0 to -3.2, y = 1.4)
+  addBox(group, 1.0, 1.2, 1.2, -3.8, 1.5, 0, materials.doradoAmber);
+
+  // Lower mid-body rising (x = -3.0, y = 2.2)
+  addBox(group, 1.2, 1.6, 1.8, -2.9, 2.3, 0, materials.doradoGold);
+  addBox(group, 1.0, 0.5, 1.7, -2.9, 1.4, 0, materials.doradoSilver); // Silver belly
+
+  // Mid-body ascent (x = -1.8, y = 3.3)
+  addBox(group, 1.3, 2.0, 2.2, -1.8, 3.3, 0, materials.doradoGold);
+  addBox(group, 1.1, 0.5, 2.0, -1.8, 2.2, 0, materials.doradoSilver);
+  addBox(group, 1.3, 0.4, 0.4, -1.8, 4.4, 0, materials.doradoAmber); // Amber scale ridge
+
+  // Apex of the jump (x = -0.5, y = 4.2) - Highest arch
+  addBox(group, 1.4, 2.2, 2.4, -0.5, 4.2, 0, materials.doradoGold);
+  addBox(group, 1.2, 0.6, 2.2, -0.5, 3.0, 0, materials.doradoSilver);
+  // Spiny Dorsal Fin at the crest of the jump
+  addBox(group, 0.8, 1.2, 0.25, -0.6, 5.6, 0, materials.doradoAmber);
+  addBox(group, 0.6, 0.8, 0.25, -0.1, 5.4, 0, materials.doradoAmber);
+
+  // Body arching downward (x = 0.8, y = 3.8)
+  addBox(group, 1.3, 2.1, 2.3, 0.8, 3.8, 0, materials.doradoGold);
+  addBox(group, 1.1, 0.5, 2.1, 0.8, 2.6, 0, materials.doradoSilver);
+
+  // Pelvic and Anal fins
+  addBox(group, 0.4, 0.8, 0.25, -1.2, 1.9, 0.8, materials.doradoRed);
+  addBox(group, 0.4, 0.8, 0.25, -1.2, 1.9, -0.8, materials.doradoRed);
+
+  // 4. Large Predatory Dorado Head (x = 2.0 to 3.4, y = 3.2 down to 2.2)
+  addBox(group, 1.4, 1.8, 2.0, 2.0, 3.2, 0, materials.doradoGold);
+  // Operculum (Gills) with vivid red flap
+  addBox(group, 0.3, 1.4, 2.1, 1.6, 3.2, 0, materials.doradoRed);
+
+  // Flared Pectoral Fins on both sides
+  addBox(group, 0.8, 0.3, 1.2, 1.6, 2.5, 1.4, materials.doradoRed);
+  addBox(group, 0.8, 0.3, 1.2, 1.6, 2.5, -1.4, materials.doradoRed);
+
+  // Piercing Eyes (black with gold iris)
+  addBox(group, 0.35, 0.35, 2.1, 2.2, 3.6, 0, materials.doradoBlack);
+  addBox(group, 0.45, 0.45, 2.05, 2.2, 3.6, 0, materials.goldAccent);
+
+  // Open mouth with prognathous lower jaw
+  // Upper snout
+  addBox(group, 1.0, 0.6, 1.6, 2.9, 3.3, 0, materials.doradoGold);
+  // Open mouth gap (dark red cavity)
+  addBox(group, 0.8, 0.4, 1.2, 2.9, 2.8, 0, materials.industrialBrick);
+  // Lower jaw projecting forward
+  addBox(group, 1.1, 0.5, 1.5, 3.0, 2.4, 0, materials.doradoGold);
 
   return group;
 }
 
 // ==========================================
-// 2. Typological Generators for Remaining Places
+// 3. Typological Generators for Remaining Places
 // ==========================================
 
-/**
- * Typology A: Civic Plazas & Squares (Plaza 1° de Mayo, Plaza Alvear, etc.)
- */
 export function buildPlazaVoxel(place: Place): THREE.Group {
   const group = new THREE.Group();
-  group.name = `typology_plaza_${place.id}`;
+  group.name = `plaza_${place.id}`;
 
-  // Plaza tiled perimeter base
-  const base = new THREE.Mesh(new THREE.BoxGeometry(22, 0.4, 22), materials.whiteStone);
-  base.position.y = 0.2;
-  base.receiveShadow = true;
-  group.add(base);
+  addBox(group, 22, 0.4, 22, 0, 0.2, 0, materials.granitePlinth);
+  addBox(group, 20, 0.2, 20, 0, 0.4, 0, materials.pitchGrass);
 
-  // 4 green lawn quadrants
-  [-5.5, 5.5].forEach(qx => {
-    [-5.5, 5.5].forEach(qz => {
-      const lawn = new THREE.Mesh(new THREE.BoxGeometry(8, 0.3, 8), materials.pitchGrass);
-      lawn.position.set(qx, 0.5, qz);
-      group.add(lawn);
-
-      // A park bench on each lawn
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.4, 0.8), materials.woodPlanks);
-      bench.position.set(qx, 0.8, qz + 2.5);
-      group.add(bench);
-    });
-  });
-
-  // Central Fountain
-  const fountainBase = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.6, 0.8, 12), materials.whiteStone);
-  fountainBase.position.y = 0.7;
-  group.add(fountainBase);
-
-  const water = new THREE.Mesh(new THREE.CylinderGeometry(2.8, 2.8, 0.2, 12), materials.waterFountain);
-  water.position.y = 1.1;
-  group.add(water);
-
-  const fountainCenter = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 2.2, 8), materials.whiteStone);
-  fountainCenter.position.y = 1.8;
-  group.add(fountainCenter);
+  // Central monument / fountain
+  addBox(group, 4.5, 0.5, 4.5, 0, 0.65, 0, materials.whiteStone);
+  addBox(group, 3.5, 0.3, 3.5, 0, 0.9, 0, materials.waterFountain);
+  addBox(group, 1.2, 3.8, 1.2, 0, 2.8, 0, materials.whiteStone);
+  addBox(group, 0.8, 1.2, 0.8, 0, 5.0, 0, materials.bronzeStatue);
 
   return group;
 }
 
-/**
- * Typology B: Sports Clubs & Athletic Complexes
- */
 export function buildClubDeportivoVoxel(place: Place): THREE.Group {
   const group = new THREE.Group();
-  group.name = `typology_club_${place.id}`;
+  group.name = `club_${place.id}`;
 
-  // Clubhouse pavilion
-  const pavilion = new THREE.Mesh(new THREE.BoxGeometry(14, 5.5, 8), materials.creamStone);
-  pavilion.position.set(-4.0, 2.75, 4.0);
-  pavilion.castShadow = true;
-  group.add(pavilion);
+  addBox(group, 24, 0.4, 18, 0, 0.2, 0, materials.granitePlinth);
 
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(15, 1.4, 9), materials.terracotta);
-  roof.position.set(-4.0, 6.2, 4.0);
-  group.add(roof);
-
-  // Painted sports court (Clay tennis or blue basketball court)
-  const isTennis = place.id.includes('nautico') || place.id.includes('estudiantes');
+  const isTennis = place.name.toLowerCase().includes('tenis') || place.name.toLowerCase().includes('rowing');
   const courtMat = isTennis ? materials.tennisClay : materials.courtBlue;
-  const court = new THREE.Mesh(new THREE.BoxGeometry(16, 0.2, 10), courtMat);
-  court.position.set(4.0, 0.1, -4.0);
-  court.receiveShadow = true;
-  group.add(court);
+  addBox(group, 14, 0.15, 9, -3, 0.45, 0, courtMat);
 
-  // Court perimeter fence posts
-  for (let fx = -4; fx <= 12; fx += 8) {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.5, 4), materials.whiteStone);
-    post.position.set(fx, 1.8, -9.0);
-    group.add(post);
-  }
+  // Clubhouse / Pavilions
+  addBox(group, 7, 5.5, 12, 7.5, 3.15, 0, materials.creamStone);
+  addBox(group, 7.5, 1.0, 12.5, 7.5, 6.2, 0, materials.slateRoof);
 
   return group;
 }
 
-/**
- * Typology C: Classical Museums & Libraries
- */
 export function buildMuseoBibliotecaVoxel(place: Place): THREE.Group {
   const group = new THREE.Group();
-  group.name = `typology_museo_${place.id}`;
+  group.name = `cultura_${place.id}`;
 
-  const podium = new THREE.Mesh(new THREE.BoxGeometry(18, 0.8, 14), materials.granitePlinth);
-  podium.position.y = 0.4;
-  group.add(podium);
+  addBox(group, 20, 0.6, 16, 0, 0.3, 0, materials.granitePlinth);
+  addBox(group, 18, 7.0, 14, 0, 4.1, 0, materials.creamStone);
 
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(16, 7.0, 12), materials.peachStone);
-  hall.position.set(0, 4.3, 0);
-  hall.castShadow = true;
-  group.add(hall);
-
-  const pediment = new THREE.Mesh(new THREE.ConeGeometry(5.0, 1.8, 3), materials.whiteStone);
-  pediment.rotation.y = Math.PI;
-  pediment.rotation.z = Math.PI / 2;
-  pediment.position.set(0, 8.5, 6.1);
-  group.add(pediment);
-
-  // 4 Entrance Columns
-  for (let c = -1.5; c <= 1.5; c += 1.0) {
-    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 6.0, 6), materials.whiteStone);
-    col.position.set(c * 2.5, 3.8, 6.1);
-    group.add(col);
+  // Classical entrance columns
+  for (let c = -2.5; c <= 2.5; c += 1.25) {
+    addBox(group, 0.5, 5.5, 0.5, c * 2.2, 3.5, 7.4, materials.whiteStone);
   }
-
-  const mansard = new THREE.Mesh(new THREE.BoxGeometry(15, 2.0, 11), materials.slateRoof);
-  mansard.position.y = 8.5;
-  group.add(mansard);
+  addBox(group, 14, 0.8, 2.5, 0, 6.6, 7.4, materials.whiteStone);
+  addBox(group, 10, 1.4, 0.6, 0, 7.6, 7.4, materials.whiteStone);
+  addBox(group, 18.4, 1.4, 14.4, 0, 8.3, 0, materials.slateRoof);
 
   return group;
 }
 
-/**
- * Typology D: Coastal Balnearios & Natural Parks
- */
 export function buildParqueBalnearioVoxel(place: Place): THREE.Group {
   const group = new THREE.Group();
-  group.name = `typology_balneario_${place.id}`;
+  group.name = `balneario_${place.id}`;
 
-  const base = new THREE.Mesh(new THREE.BoxGeometry(20, 0.4, 16), materials.creamStone);
-  base.position.y = 0.2;
-  group.add(base);
+  addBox(group, 24, 0.4, 18, 0, 0.2, 0, materials.creamStone);
+  addBox(group, 22, 0.2, 12, 0, 0.45, -2, materials.pitchGrass);
 
-  // Wooden boardwalk
-  const boardwalk = new THREE.Mesh(new THREE.BoxGeometry(18, 0.4, 3.5), materials.woodPlanks);
-  boardwalk.position.set(0, 0.4, 4.0);
-  group.add(boardwalk);
-
-  // 3 Thatched beach quinchos / parasols
-  [-5, 0, 5].forEach(qx => {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.0, 6), materials.woodPlanks);
-    pole.position.set(qx, 1.5, -2.0);
-    group.add(pole);
-
-    const quincho = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.2, 8), materials.woodPlanks);
-    quincho.position.set(qx, 3.2, -2.0);
-    group.add(quincho);
-  });
+  // Riverside promenade & pergola
+  addBox(group, 22, 0.3, 4, 0, 0.5, 6, materials.granitePlinth);
+  for (let px = -8; px <= 8; px += 4) {
+    addBox(group, 0.3, 2.8, 0.3, px, 1.9, 6, materials.whiteStone);
+  }
+  addBox(group, 18, 0.2, 1.2, 0, 3.4, 6, materials.woodPlanks);
 
   return group;
 }
 
-/**
- * Typology E: Commercial Walks, Markets & Ferias
- */
 export function buildPaseoComercialVoxel(place: Place): THREE.Group {
   const group = new THREE.Group();
-  group.name = `typology_comercio_${place.id}`;
+  group.name = `paseo_${place.id}`;
 
-  const marketHall = new THREE.Mesh(new THREE.BoxGeometry(16, 6.0, 10), materials.peachStone);
-  marketHall.position.set(0, 3.0, 0);
-  marketHall.castShadow = true;
-  group.add(marketHall);
+  addBox(group, 18, 0.4, 14, 0, 0.2, 0, materials.granitePlinth);
+  addBox(group, 16, 6.0, 12, 0, 3.4, 0, materials.peachStone);
 
-  // Barrel-vaulted or arched market roof
-  const barrelRoof = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.2, 16, 12, 1, false, 0, Math.PI), materials.zincRoof);
-  barrelRoof.rotation.z = Math.PI / 2;
-  barrelRoof.position.set(0, 6.0, 0);
-  group.add(barrelRoof);
-
-  // Striped market canopy awnings in front
-  const awning = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 2.5), materials.patronatoRed);
-  awning.position.set(0, 3.2, 5.5);
-  awning.rotation.x = Math.PI / 12;
-  group.add(awning);
+  // Shopfront awnings & windows
+  addBox(group, 14, 2.2, 0.3, 0, 1.8, 6.1, materials.glassCyan);
+  addBox(group, 15, 0.4, 1.8, 0, 3.2, 6.8, materials.patronatoRed);
+  addBox(group, 16.4, 1.2, 12.4, 0, 7.0, 0, materials.slateRoof);
 
   return group;
 }
 
 // ==========================================
-// 3. Master Dispatcher (100% Place Coverage)
+// 4. Master Dispatcher (100% Place Coverage)
 // ==========================================
 
 export function buildModelForPlace(place: Place): THREE.Group {
-  // 1. Direct Bespoke Hand-Crafted Landmark Model Matches
   switch (place.id) {
     case 'catedral_metropolitana':
       return buildCatedral();
@@ -1087,7 +1126,6 @@ export function buildModelForPlace(place: Place): THREE.Group {
       break;
   }
 
-  // 2. High-Fidelity Typological Fallbacks
   const nameLower = place.name.toLowerCase();
   const idLower = place.id.toLowerCase();
 

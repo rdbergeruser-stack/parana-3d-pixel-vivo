@@ -1890,8 +1890,10 @@ function buildUrbanCityBlocks(
   exclusions: { x: number; z: number; r: number }[],
   pixels: Uint8ClampedArray
 ) {
-  const maxBuildings = 3400;
-  // Base 1x1x1 unit box scaled per instance
+  const maxBuildings = 10000;
+  const maxRoofs = 10000;
+
+  // Base 1x1x1 unit box scaled per instance for building bodies
   const bldgGeom = new THREE.BoxGeometry(1, 1, 1);
   const bldgMat = new THREE.MeshStandardMaterial({
     roughness: 0.82,
@@ -1901,43 +1903,65 @@ function buildUrbanCityBlocks(
   bldgMesh.castShadow = true;
   bldgMesh.receiveShadow = true;
 
-  // Rooftop details (water tanks / elevator machine rooms / mechanical penthouses)
-  const maxRoofs = 1600;
+  // Upper roof blocks (pitched tejas, flat slabs with parapets, elevator penthouses)
   const roofGeom = new THREE.BoxGeometry(1, 1, 1);
   const roofMat = new THREE.MeshStandardMaterial({
-    color: '#cbd5e1',
-    roughness: 0.9,
-    metalness: 0.1
+    roughness: 0.75,
+    metalness: 0.05
   });
   const roofMesh = new THREE.InstancedMesh(roofGeom, roofMat, maxRoofs);
   roofMesh.castShadow = true;
+  roofMesh.receiveShadow = true;
 
   const dummy = new THREE.Object3D();
-  const color = new THREE.Color();
+  const bldgColor = new THREE.Color();
+  const roofColor = new THREE.Color();
 
-  // Architectural diorama palette (warm stones, creams, light greys, muted terracottas)
-  const palette = [
+  // Architectural palettes
+  const wallPaletteDowntown = [
     '#ffffff', // Crisp white stucco
-    '#f8fafc', // Light slate
+    '#f8fafc', // Modern light limestone
+    '#e2e8f0', // Clean concrete
     '#f1f5f9', // Pale limestone
-    '#e2e8f0', // Warm concrete
-    '#fed7aa', // Light terracotta
-    '#fef3c7', // Warm sand ivory
-    '#ffedd5', // Pale peach stone
-    '#e0e7ff', // Pale lilac
-    '#fce7f3'  // Soft colonial rose
+    '#fed7aa', // Light peach
+    '#fef3c7', // Warm ivory
+    '#334155'  // Contemporary slate accent
+  ];
+
+  const wallPaletteResidential = [
+    '#ffffff', // Classic whitewash
+    '#fef3c7', // Warm cream
+    '#fed7aa', // Pale terracotta ochre
+    '#b91c1c', // Exposed Argentine brick
+    '#f8fafc', // Light stone
+    '#fde047', // Warm colonial yellow
+    '#e2e8f0'  // Light grey
+  ];
+
+  const roofPaletteTejas = [
+    '#c05621', // Terracotta teja colonial
+    '#9a3412', // Rich baked clay
+    '#b45309', // Warm amber tile
+    '#7c2d12'  // Deep burnt sienna
+  ];
+
+  const roofPaletteFlat = [
+    '#94a3b8', // Weathered concrete slab
+    '#cbd5e1', // Light zinc / cement
+    '#64748b', // Grey terrace
+    '#475569'  // Dark slate parapet
   ];
 
   let bldgCount = 0;
   let roofCount = 0;
 
-  const step = 5.6; // dense sampling across the city bounds
+  const step = 2.75; // Dense grid step (~27m spacing between houses/lots)
   const xMin = -240;
   const xMax = 280;
   const zMin = -200;
   const zMax = 220;
 
-  // Procedural deterministic hash for consistent variation
+  // Procedural deterministic hash
   const pseudoRand = (x: number, z: number) => {
     const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
     return s - Math.floor(s);
@@ -1949,10 +1973,11 @@ function buildUrbanCityBlocks(
 
       const r1 = pseudoRand(x, z);
       const r2 = pseudoRand(z, x);
+      const r3 = pseudoRand(x + 3.7, z + 5.9);
 
-      // Slight organic position jitter (+- 0.6)
-      const candX = x + (r1 - 0.5) * 1.2;
-      const candZ = z + (r2 - 0.5) * 1.2;
+      // Organic position jitter (+- 0.45)
+      const candX = x + (r1 - 0.5) * 0.9;
+      const candZ = z + (r2 - 0.5) * 0.9;
 
       // Inverse projection to GPS
       const lat = PARANA_ORIGIN.lat - candZ / (111139.0 / 10.0);
@@ -1961,7 +1986,7 @@ function buildUrbanCityBlocks(
       // Must be strictly on dry land
       if (!isLand(lat, lng)) continue;
 
-      // Must be on city plateau (elev >= 6.0) - keeps costanera promenade and river banks clear
+      // Plateau elevation check (elev >= 6.0) - keeps river and costanera promenade clear
       const elev = getTerrainElevation(candX, candZ);
       if (elev < 6.0) continue;
 
@@ -1975,71 +2000,124 @@ function buildUrbanCityBlocks(
       }
       if (inPark) continue;
 
-      // Must NOT collide with any landmark exclusion zone (radius + 12 units)
+      // Strict but tight landmark exclusion (3.5 to 5.0 unit clearance to avoid empty craters)
       let tooCloseToLandmark = false;
       for (const e of exclusions) {
         const dx = candX - e.x;
         const dz = candZ - e.z;
-        if (dx * dx + dz * dz < (e.r + 12.0) * (e.r + 12.0)) {
+        const clearance = Math.min(e.r, 4.5) + 0.8;
+        if (dx * dx + dz * dz < clearance * clearance) {
           tooCloseToLandmark = true;
           break;
         }
       }
       if (tooCloseToLandmark) continue;
 
-      // Pixel collision check on draped canvas ground texture
-      // Candidate center must be on 'block'
+      // Pixel collision check on draped ground texture
+      // Candidate center must be on 'block' (#e8e0d5)
       if (getGroundTypeAtWorldPos(candX, candZ, pixels) !== 'block') continue;
 
-      // Check 4 footprint corners (1.8 radius) to prevent clipping onto roads or parks
-      const cornerOffset = 1.8;
+      // Check 4 footprint corners with 0.85 radius to ensure building does not overlap into street asphalt
+      const cornerOffset = 0.85;
       if (getGroundTypeAtWorldPos(candX - cornerOffset, candZ - cornerOffset, pixels) !== 'block') continue;
       if (getGroundTypeAtWorldPos(candX + cornerOffset, candZ - cornerOffset, pixels) !== 'block') continue;
       if (getGroundTypeAtWorldPos(candX - cornerOffset, candZ + cornerOffset, pixels) !== 'block') continue;
       if (getGroundTypeAtWorldPos(candX + cornerOffset, candZ + cornerOffset, pixels) !== 'block') continue;
 
-      // Sizing
-      const bldgW = 3.2 + r1 * 1.6;
-      const bldgD = 3.2 + r2 * 1.6;
-
-      // Height based on distance to downtown core (Plaza 1° de Mayo ~ 0, 0)
+      // Zone determination
       const distFromCore = Math.hypot(candX, candZ);
+      const isUrquizaFront = (candX < 45 && candZ < 40 && candZ > -110);
+      const isDowntown = distFromCore < 75 || isUrquizaFront;
+
+      let bldgW: number;
+      let bldgD: number;
       let bldgH: number;
-      if (distFromCore < 75) {
-        // High-density downtown: mid-rises & towers (7 to 20m)
-        bldgH = 7.0 + r1 * 13.0;
-      } else if (distFromCore < 150) {
-        // Medium density: 4.5 to 11m
-        bldgH = 4.5 + r1 * 6.5;
+      let wallColHex: string;
+
+      let hasRoofBlock = false;
+      let roofW = 0;
+      let roofD = 0;
+      let roofH = 0;
+      let roofColHex = '';
+
+      if (isDowntown) {
+        // Microcentro & Frente al Parque Urquiza
+        if (r3 < 0.40) {
+          // Towers & Mid-rises (6 to 14 floors)
+          bldgH = 7.5 + r1 * 12.5; // 7.5 to 20 units
+          bldgW = 2.2 + r1 * 0.6;
+          bldgD = 2.2 + r2 * 0.6;
+          wallColHex = wallPaletteDowntown[Math.floor(r2 * wallPaletteDowntown.length)];
+
+          // Elevator machine room / water tank penthouse
+          if (roofCount < maxRoofs) {
+            hasRoofBlock = true;
+            roofW = bldgW * 0.65;
+            roofD = bldgD * 0.65;
+            roofH = 1.2 + r1 * 0.8;
+            roofColHex = (r1 < 0.5) ? '#94a3b8' : '#475569';
+          }
+        } else {
+          // Commercial 2-4 floors forming continuous block fronts
+          bldgH = 3.6 + r1 * 2.8; // 3.6 to 6.4 units
+          bldgW = 2.1 + r1 * 0.5;
+          bldgD = 2.1 + r2 * 0.5;
+          wallColHex = wallPaletteDowntown[Math.floor(r2 * wallPaletteDowntown.length)];
+
+          // Parapet / rooftop terrace room
+          if (roofCount < maxRoofs && r2 > 0.25) {
+            hasRoofBlock = true;
+            roofW = bldgW * 0.75;
+            roofD = bldgD * 0.75;
+            roofH = 0.6;
+            roofColHex = '#cbd5e1';
+          }
+        }
       } else {
-        // Low density suburban / residential: 2.8 to 6m
-        bldgH = 2.8 + r1 * 3.2;
+        // Residential neighborhoods: low-rise houses (1-2 stories)
+        bldgH = 1.8 + r1 * 1.4; // 1.8 to 3.2 units
+        bldgW = 2.0 + r1 * 0.4;
+        bldgD = 2.0 + r2 * 0.4;
+        wallColHex = wallPaletteResidential[Math.floor(r2 * wallPaletteResidential.length)];
+
+        if (roofCount < maxRoofs) {
+          hasRoofBlock = true;
+          if (r3 < 0.60) {
+            // Pitched roof in terracotta teja (Techo a dos aguas)
+            roofW = bldgW + 0.25; // slight eave overhang
+            roofD = bldgD + 0.25;
+            roofH = 0.65;
+            roofColHex = roofPaletteTejas[Math.floor(r1 * roofPaletteTejas.length)];
+          } else {
+            // Flat roof with parapet / medianeras
+            roofW = bldgW;
+            roofD = bldgD;
+            roofH = 0.35;
+            roofColHex = roofPaletteFlat[Math.floor(r1 * roofPaletteFlat.length)];
+          }
+        }
       }
 
-      // Position building
+      // 1. Position Base Building
       dummy.position.set(candX, elev + bldgH / 2, candZ);
       dummy.scale.set(bldgW, bldgH, bldgD);
       dummy.rotation.set(0, (Math.floor(r1 * 4) * Math.PI) / 2, 0);
       dummy.updateMatrix();
       bldgMesh.setMatrixAt(bldgCount, dummy.matrix);
 
-      // Color
-      const colHex = palette[Math.floor(r2 * palette.length)];
-      color.set(colHex);
-      bldgMesh.setColorAt(bldgCount, color);
+      bldgColor.set(wallColHex);
+      bldgMesh.setColorAt(bldgCount, bldgColor);
 
-      // Rooftop feature for taller buildings
-      if (bldgH > 7.5 && roofCount < maxRoofs && r2 > 0.3) {
-        const roofW = bldgW * (0.35 + r1 * 0.25);
-        const roofD = bldgD * (0.35 + r2 * 0.25);
-        const roofH = 1.0 + r1 * 1.2;
-        const roofY = elev + bldgH + roofH / 2;
-
-        dummy.position.set(candX, roofY, candZ);
+      // 2. Position Roof Block
+      if (hasRoofBlock) {
+        dummy.position.set(candX, elev + bldgH + roofH / 2, candZ);
         dummy.scale.set(roofW, roofH, roofD);
-        dummy.rotation.set(0, 0, 0);
+        dummy.rotation.set(0, (Math.floor(r1 * 4) * Math.PI) / 2, 0);
         dummy.updateMatrix();
         roofMesh.setMatrixAt(roofCount, dummy.matrix);
+
+        roofColor.set(roofColHex);
+        roofMesh.setColorAt(roofCount, roofColor);
         roofCount++;
       }
 
@@ -2057,6 +2135,7 @@ function buildUrbanCityBlocks(
   if (roofCount > 0) {
     roofMesh.count = roofCount;
     roofMesh.instanceMatrix.needsUpdate = true;
+    if (roofMesh.instanceColor) roofMesh.instanceColor.needsUpdate = true;
     scene.add(roofMesh);
   }
 }
@@ -2437,33 +2516,29 @@ function buildAllPlaceLandmarks(scene: THREE.Scene, roadIndex: RoadNetworkSpatia
 
     let { x, z } = projectTo3D(place.coordinates.lat, place.coordinates.lng);
 
-    // Dynamic footprint radius based on landmark architecture
-    let r = 8.0;
+    // Dynamic footprint radius based on landmark architecture (compact to prevent empty craters)
+    let r = 3.5;
     if (
       place.id === 'catedral_metropolitana' ||
       place.id === 'estadio_patronato' ||
-      place.id === 'estacion_ferrocarril'
+      place.id === 'casa_de_gobierno'
     ) {
-      r = 14.0;
+      r = 5.0;
     } else if (
       place.id === 'centro_cultural_juanele' ||
-      place.id === 'casa_de_gobierno' ||
-      place.id === 'sala_mayo'
+      place.id === 'la_vieja_usina' ||
+      place.id === 'sala_mayo' ||
+      place.id === 'estacion_ferrocarril' ||
+      place.id === 'escuela_normal' ||
+      place.id === 'teatro_3_febrero'
     ) {
-      r = 11.0;
+      r = 4.5;
     } else if (
       place.id === 'plaza_1_de_mayo' ||
       place.id === 'parque_urquiza' ||
       place.id === 'parque_gazzano'
     ) {
-      r = 16.0;
-    } else if (
-      place.id === 'la_vieja_usina' ||
-      place.id === 'escuela_normal' ||
-      place.id === 'colegio_del_huerto' ||
-      place.id === 'teatro_3_febrero'
-    ) {
-      r = 10.0;
+      r = 4.5; // Parks are also protected by polygon
     }
 
     // Snap monument off any road or rail if footprint encroaches
