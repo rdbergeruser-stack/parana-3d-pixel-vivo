@@ -83,22 +83,38 @@ export const ISLA_PUENTE_POLYGON: [number, number][] = [
  * Any point outside this polygon (and not on Curupí/Puente) is STRICTLY Río Paraná water.
  */
 export const PARANA_MAINLAND_POLYGON: [number, number][] = [
-  [-31.7067, -60.5050], // Boca Túnel Subfluvial
-  [-31.7100, -60.5130], // Punta Thompson norte
-  [-31.7135, -60.5180], // Complejo y Playa Thompson
-  [-31.7161, -60.5278], // Dársena Puerto Nuevo / Sala Mayo
-  [-31.7175, -60.5340], // Monumento al Mate / Costanera Baja
+  [-31.7040, -60.4950], // Costa este hacia Túnel Subfluvial
+  [-31.7067, -60.5050], // Cabecera Túnel Subfluvial
+  [-31.7085, -60.5100], // Bahía este Thompson
+  [-31.7100, -60.5135], // Punta norte Thompson
+  [-31.7118, -60.5165], // Curva Playa Thompson
+  [-31.7135, -60.5185], // Desembocadura arroyo Las Viejas
+  [-31.7145, -60.5220], // Borde costero hacia Puerto Nuevo
+  [-31.7155, -60.5255], // Ingreso a Dársena Puerto Nuevo
+  [-31.7148, -60.5275], // Dársena y Muelle este
+  [-31.7161, -60.5288], // Frente Sala Mayo
+  [-31.7170, -60.5305], // Dársena interna y Puerto Flotante
+  [-31.7174, -60.5335], // Monumento al Mate / Plaza de las Colectividades
+  [-31.7176, -60.5365], // Costanera Laurencena media
   [-31.7178, -60.5392], // Balneario Municipal
-  [-31.7195, -60.5422], // Club Náutico / pie de barranca
-  [-31.7225, -60.5450], // Curva Costanera Oeste
-  [-31.7250, -60.5530], // Punta Parque Nuevo Varisco
-  [-31.7280, -60.5620], // Puerto Histórico Bajada Grande
-  [-31.7380, -60.5670], // Bajada Grande sur / Barranca baja
-  [-31.7500, -60.5700], // Suroeste río
-  [-31.7850, -60.5700], // Límite sur profundo
+  [-31.7188, -60.5415], // Curva hacia Club Náutico
+  [-31.7198, -60.5430], // Punta oeste Club Náutico
+  [-31.7215, -60.5445], // Pie de barranca Puerto Viejo
+  [-31.7230, -60.5470], // Mirador Piedras Blancas
+  [-31.7245, -60.5505], // Ensenada previa a Parque Varisco
+  [-31.7258, -60.5540], // Punta Parque Varisco
+  [-31.7270, -60.5580], // Ribera Parque Nuevo
+  [-31.7282, -60.5620], // Curva entrante de Bajada Grande
+  [-31.7300, -60.5645], // Muelle histórico Bajada Grande
+  [-31.7335, -60.5665], // Costa Bajada Grande
+  [-31.7375, -60.5675], // Bajada Grande sur
+  [-31.7430, -60.5680], // Barranca sur de Bajada Grande
+  [-31.7500, -60.5685], // Costa sudoeste hacia Los Arenales
+  [-31.7650, -60.5690], // Límite sudoeste maqueta
+  [-31.7850, -60.5690], // Límite sur profundo
   [-31.7850, -60.4500], // Límite sureste rural
-  [-31.7067, -60.4500], // Límite noreste Acceso Norte
-  [-31.7067, -60.5050]  // Cierre en Túnel Subfluvial
+  [-31.7040, -60.4500], // Límite noreste
+  [-31.7040, -60.4950]  // Cierre en costa noreste
 ];
 
 /**
