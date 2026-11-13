@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PLACES, PLACE_CATEGORIES, Place, PlaceCategory } from '@/data/places';
 import { ROUTES, TourRoute } from '@/data/routes';
-import { projectTo3D, getElevation, PARANA_ORIGIN, isWater } from '@/lib/geo';
+import { projectTo3D, getElevation, PARANA_ORIGIN, isLand, isWater } from '@/lib/geo';
 import {
   Compass,
   RotateCcw,
@@ -211,9 +211,9 @@ export default function ParanaMap3D() {
     const { camera, controls } = engineRef.current;
 
     engineRef.current.startControlsTarget.copy(controls.target);
-    engineRef.current.endControlsTarget.set(0, 4, 0);
+    engineRef.current.endControlsTarget.set(0, 8.5, 0);
     engineRef.current.startCameraPos.copy(camera.position);
-    engineRef.current.endCameraPos.set(180, 210, 180);
+    engineRef.current.endCameraPos.set(190, 240, 190);
     engineRef.current.animStartTime = performance.now();
     engineRef.current.animDuration = 900;
     engineRef.current.isAnimatingCamera = true;
@@ -312,7 +312,7 @@ export default function ParanaMap3D() {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.target.set(0, 4, 0); // Plaza 1° de Mayo
+    controls.target.set(0, 8.5, 0); // Plaza 1° de Mayo (Urban Plateau Y = 8.5)
     controls.minDistance = 10;
     controls.maxDistance = 650;
     controls.maxPolarAngle = Math.PI * 0.72; // Allow tilting below horizon to view under the diorama
@@ -1207,8 +1207,71 @@ export default function ParanaMap3D() {
 // 3D Procedural Generators & Builder Helpers
 // ==========================================
 
+// Cell types for the 2D Occupancy Grid
+const CELL_EMPTY_LAND = 0;
+const CELL_WATER = 1;
+const CELL_ROAD = 2;
+const CELL_AVENUE = 3;
+const CELL_RAIL = 4;
+const CELL_PARK = 5;
+const CELL_LANDMARK = 6;
+
+class OccupancyGrid {
+  private cells: Map<string, number> = new Map();
+  public step: number;
+
+  constructor(step = 6.0) {
+    this.step = step;
+  }
+
+  private key(gx: number, gz: number): string {
+    return `${gx},${gz}`;
+  }
+
+  public toGrid(coord: number): number {
+    return Math.round(coord / this.step);
+  }
+
+  public set(x: number, z: number, type: number): void {
+    const gx = this.toGrid(x);
+    const gz = this.toGrid(z);
+    this.cells.set(this.key(gx, gz), type);
+  }
+
+  public get(x: number, z: number): number {
+    const gx = this.toGrid(x);
+    const gz = this.toGrid(z);
+    return this.cells.get(this.key(gx, gz)) ?? CELL_EMPTY_LAND;
+  }
+
+  public markCircle(cx: number, cz: number, radius: number, type: number): void {
+    const radCells = Math.ceil(radius / this.step);
+    const cgx = this.toGrid(cx);
+    const cgz = this.toGrid(cz);
+    for (let dx = -radCells; dx <= radCells; dx++) {
+      for (let dz = -radCells; dz <= radCells; dz++) {
+        if (dx * dx + dz * dz <= (radius / this.step) * (radius / this.step)) {
+          this.cells.set(this.key(cgx + dx, cgz + dz), type);
+        }
+      }
+    }
+  }
+
+  public markSegment(x1: number, z1: number, x2: number, z2: number, width: number, type: number): void {
+    const dist = Math.hypot(x2 - x1, z2 - z1);
+    const steps = Math.max(1, Math.ceil(dist / (this.step * 0.5)));
+    const rad = width / 2;
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      const px = x1 + (x2 - x1) * t;
+      const pz = z1 + (z2 - z1) * t;
+      this.markCircle(px, pz, rad, type);
+    }
+  }
+}
+
 /**
- * 1. Build Quantized Voxel Terrain with stepped Parque Urquiza Barrancas
+ * 1. Build Quantized Voxel Terrain with stepped Parque Urquiza Barrancas & 2D Occupancy Grid
  */
 function buildVoxelTerrain(
   scene: THREE.Scene,
@@ -1226,6 +1289,98 @@ function buildVoxelTerrain(
   const rows = Math.ceil((zMax - zMin) / step);
   const maxInstances = cols * rows;
 
+  // Initialize Occupancy Grid
+  const grid = new OccupancyGrid(step);
+
+  // 1. Mark Water Cells
+  for (let ix = 0; ix < cols; ix++) {
+    for (let iz = 0; iz < rows; iz++) {
+      const x = xMin + ix * step;
+      const z = zMin + iz * step;
+      const lat = PARANA_ORIGIN.lat - z / 11088.0;
+      const lng = PARANA_ORIGIN.lng + x / 9468.0;
+      if (isWater(lat, lng)) {
+        grid.set(x, z, CELL_WATER);
+      }
+    }
+  }
+
+  // 2. Mark Landmarks with footprint safety radii
+  exclusions.forEach(l => {
+    grid.markCircle(l.x, l.z, l.r + 2.0, CELL_LANDMARK);
+  });
+
+  // 3. Mark Parks
+  geoData.parks.forEach(park => {
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    park.polygon.forEach(([lat, lng]) => {
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+    });
+
+    const pMin = projectTo3D(maxLat, minLng);
+    const pMax = projectTo3D(minLat, maxLng);
+    const startX = Math.floor(Math.min(pMin.x, pMax.x) / step) * step;
+    const endX = Math.ceil(Math.max(pMin.x, pMax.x) / step) * step;
+    const startZ = Math.floor(Math.min(pMin.z, pMax.z) / step) * step;
+    const endZ = Math.ceil(Math.max(pMin.z, pMax.z) / step) * step;
+
+    for (let x = startX; x <= endX; x += step) {
+      for (let z = startZ; z <= endZ; z += step) {
+        const lat = PARANA_ORIGIN.lat - z / 11088.0;
+        const lng = PARANA_ORIGIN.lng + x / 9468.0;
+        if (isPointInPolygon([lat, lng], park.polygon)) {
+          if (grid.get(x, z) === CELL_EMPTY_LAND) {
+            grid.set(x, z, CELL_PARK);
+          }
+        }
+      }
+    }
+  });
+
+  // 4. Mark Arteries on Grid
+  geoData.arteries.forEach(artery => {
+    if (!artery.coordinates || artery.coordinates.length < 2) return;
+    const isRamirez = artery.name.toLowerCase().includes('ramírez') || artery.name.toLowerCase().includes('ramirez');
+    const width = isRamirez ? 8.5 : 5.5;
+    const type = isRamirez ? CELL_AVENUE : CELL_ROAD;
+
+    for (let i = 0; i < artery.coordinates.length - 1; i++) {
+      const [lat1, lng1] = artery.coordinates[i];
+      const [lat2, lng2] = artery.coordinates[i + 1];
+      const p1 = projectTo3D(lat1, lng1);
+      const p2 = projectTo3D(lat2, lng2);
+      grid.markSegment(p1.x, p1.z, p2.x, p2.z, width, type);
+    }
+  });
+
+  // 5. Mark Railways
+  if (geoData.railways) {
+    geoData.railways.forEach(track => {
+      if (!track.coordinates || track.coordinates.length < 2) return;
+      for (let i = 0; i < track.coordinates.length - 1; i++) {
+        const [lat1, lng1] = track.coordinates[i];
+        const [lat2, lng2] = track.coordinates[i + 1];
+        const p1 = projectTo3D(lat1, lng1);
+        const p2 = projectTo3D(lat2, lng2);
+        grid.markSegment(p1.x, p1.z, p2.x, p2.z, 4.5, CELL_RAIL);
+      }
+    });
+  }
+
+  // 6. Mark Secondary City Grid
+  const gridX = [-70, -45, -20, 5, 30, 55, 80, 105];
+  const gridZ = [-50, -25, 0, 25, 50, 75, 100];
+  gridX.forEach(x => {
+    grid.markSegment(x, -50, x, 100, 3.5, CELL_ROAD);
+  });
+  gridZ.forEach(z => {
+    grid.markSegment(-70, z, 105, z, 3.5, CELL_ROAD);
+  });
+
+  // Geometries for Terrain Voxels
   const boxGeom = new THREE.BoxGeometry(step * 0.96, 1.0, step * 0.96);
   const terrainMat = new THREE.MeshStandardMaterial({
     roughness: 0.85,
@@ -1272,9 +1427,9 @@ function buildVoxelTerrain(
       const lat = PARANA_ORIGIN.lat - z / 11088.0;
       const lng = PARANA_ORIGIN.lng + x / 9468.0;
 
-      // Check if coordinate is in the water
-      if (isWater(lat, lng)) {
-        continue; // River water plane shows through
+      // Strict Coastal Clipping Rule: Never render outside dry land
+      if (!isLand(lat, lng)) {
+        continue; // Strictly river water plane Y = 0
       }
 
       const elev = getElevation(lat, lng);
@@ -1310,11 +1465,11 @@ function buildVoxelTerrain(
       if (isIsland) {
         color.set('#a3b18a'); // Sand/vegetation island
       } else if (isPark) {
-        color.set(elev > 2.5 ? '#65a34e' : '#78b85d'); // Warm natural greens
-      } else if (elev <= 1.2) {
+        color.set(elev > 5.0 ? '#5a9944' : '#65a34e'); // Warm natural greens on barrancas
+      } else if (elev <= 1.4) {
         color.set('#d5bdaf'); // Costanera low stone / sand
-      } else if (elev < 3.8) {
-        color.set(elev > 2.5 ? '#b58d67' : '#9c7350'); // Barranca cliff transition clay/earth
+      } else if (elev < 8.0) {
+        color.set(elev > 4.5 ? '#b58d67' : '#9c7350'); // Barranca cliff transition clay/earth
       } else {
         color.set('#d6d3d1'); // Urban street asphalt / sidewalk base
       }
@@ -1322,31 +1477,25 @@ function buildVoxelTerrain(
       instancedMesh.setColorAt(terrainCount, color);
       terrainCount++;
 
-      // Place procedural urban filler buildings on urban plateau (Y = 4)
-      if (elev >= 3.8 && !isPark && !isIsland) {
-        // Exclude footprint of all 40 place models so generic blocks don't clip them
-        const isNearLandmark = exclusions.some(
-          l => (x - l.x) * (x - l.x) + (z - l.z) * (z - l.z) < l.r * l.r
-        );
+      // Place procedural urban filler buildings strictly on EMPTY_LAND (never on roads, avenues, rails, parks, or landmarks)
+      const cellType = grid.get(x, z);
+      if (elev >= 7.5 && cellType === CELL_EMPTY_LAND && !isPark && !isIsland) {
+        // Pseudo-random deterministic hash based on coordinates
+        const hash = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+        const rand = hash - Math.floor(hash);
 
-        if (!isNearLandmark) {
-          // Pseudo-random deterministic hash based on coordinates
-          const hash = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
-          const rand = hash - Math.floor(hash);
+        if (rand > 0.35) {
+          const bldgHeight = 2.5 + rand * 5.0; // 2.5 to 7.5 units tall
+          dummy.position.set(x, elev + bldgHeight / 2, z);
+          dummy.scale.set(1, bldgHeight, 1);
+          dummy.updateMatrix();
 
-          if (rand > 0.38) {
-            const bldgHeight = 2.0 + rand * 4.5; // 2 to 6.5 units tall
-            dummy.position.set(x, elev + bldgHeight / 2, z);
-            dummy.scale.set(1, bldgHeight, 1);
-            dummy.updateMatrix();
+          bldgMesh.setMatrixAt(bldgCount, dummy.matrix);
 
-            bldgMesh.setMatrixAt(bldgCount, dummy.matrix);
-
-            const colorIdx = Math.floor(rand * bldgColors.length);
-            color.set(bldgColors[colorIdx]);
-            bldgMesh.setColorAt(bldgCount, color);
-            bldgCount++;
-          }
+          const colorIdx = Math.floor(rand * bldgColors.length);
+          color.set(bldgColors[colorIdx]);
+          bldgMesh.setColorAt(bldgCount, color);
+          bldgCount++;
         }
       }
     }
@@ -1367,12 +1516,34 @@ function buildVoxelTerrain(
 
 /**
  * 2. Build Main Arteries (Avenues) as warm graphite strips with dashed centerlines
+ * Special treatment for Av. Francisco Ramírez (Vertebral Spine of Paraná):
+ * - Double width (7.5 units)
+ * - Dark asphalt (#292524)
+ * - Central median divider strip (cantero central) with greenery & trees
+ * - Voxel lamp posts (farolas) along the avenue
  */
 function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
-  const roadMat = new THREE.MeshStandardMaterial({
+  const defaultRoadMat = new THREE.MeshStandardMaterial({
     color: '#475569', // Warm graphite grey
     roughness: 0.85,
     metalness: 0.1
+  });
+
+  const ramirezAsphaltMat = new THREE.MeshStandardMaterial({
+    color: '#262626', // Deep charcoal asphalt
+    roughness: 0.9,
+    metalness: 0.05
+  });
+
+  const medianMat = new THREE.MeshStandardMaterial({
+    color: '#15803d', // Median strip grass/cantero central
+    roughness: 0.8,
+    metalness: 0.05
+  });
+
+  const medianCurbMat = new THREE.MeshStandardMaterial({
+    color: '#a8a29e', // Concrete curb
+    roughness: 0.9
   });
 
   const lineMat = new THREE.MeshBasicMaterial({
@@ -1385,13 +1556,30 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
     metalness: 0.05
   });
 
+  const lampPostMat = new THREE.MeshStandardMaterial({
+    color: '#44403c',
+    roughness: 0.7,
+    metalness: 0.4
+  });
+
+  const lampBulbMat = new THREE.MeshBasicMaterial({
+    color: '#fef3c7'
+  });
+
   // 1. Primary avenues from OSM geoData
   geoData.arteries.forEach(artery => {
     if (!artery.coordinates || artery.coordinates.length < 2) return;
 
+    const isRamirez = artery.name.toLowerCase().includes('ramírez') || artery.name.toLowerCase().includes('ramirez');
+    const roadWidth = isRamirez ? 7.5 : 4.4;
+    const roadMat = isRamirez ? ramirezAsphaltMat : defaultRoadMat;
+
     for (let i = 0; i < artery.coordinates.length - 1; i++) {
       const [lat1, lng1] = artery.coordinates[i];
       const [lat2, lng2] = artery.coordinates[i + 1];
+
+      // Strict check: if both points are outside land, skip
+      if (!isLand(lat1, lng1) && !isLand(lat2, lng2)) continue;
 
       const p1 = projectTo3D(lat1, lng1);
       const p2 = projectTo3D(lat2, lng2);
@@ -1404,27 +1592,92 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
       const distance = v1.distanceTo(v2);
       if (distance < 0.5) continue;
 
-      const roadGeom = new THREE.BoxGeometry(4.2, 0.15, distance);
-      const roadMesh = new THREE.Mesh(roadGeom, roadMat);
+      const mid = new THREE.Vector3().copy(v1).add(v2).multiplyScalar(0.5);
+      const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
+      const perp = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
 
-      // Position at midpoint
-      roadMesh.position.copy(v1).add(v2).multiplyScalar(0.5);
+      // Main Road Bed
+      const roadGeom = new THREE.BoxGeometry(roadWidth, 0.15, distance);
+      const roadMesh = new THREE.Mesh(roadGeom, roadMat);
+      roadMesh.position.copy(mid);
       roadMesh.lookAt(v2);
       roadMesh.receiveShadow = true;
       scene.add(roadMesh);
 
-      // Dashed yellow centerline
-      const numDashes = Math.max(1, Math.floor(distance / 6));
-      for (let d = 0; d < numDashes; d++) {
-        const t = (d + 0.5) / numDashes;
-        const dashPos = new THREE.Vector3().lerpVectors(v1, v2, t);
-        dashPos.y += 0.09;
+      if (isRamirez) {
+        // Cantero Central (Raised Median Strip)
+        const medianCurbGeom = new THREE.BoxGeometry(1.2, 0.22, distance);
+        const medianCurb = new THREE.Mesh(medianCurbGeom, medianCurbMat);
+        medianCurb.position.copy(mid);
+        medianCurb.position.y += 0.04;
+        medianCurb.lookAt(v2);
+        scene.add(medianCurb);
 
-        const dashGeom = new THREE.BoxGeometry(0.25, 0.02, Math.min(2.5, distance / numDashes * 0.6));
-        const dashMesh = new THREE.Mesh(dashGeom, lineMat);
-        dashMesh.position.copy(dashPos);
-        dashMesh.lookAt(v2);
-        scene.add(dashMesh);
+        const medianGrassGeom = new THREE.BoxGeometry(0.9, 0.26, distance);
+        const medianGrass = new THREE.Mesh(medianGrassGeom, medianMat);
+        medianGrass.position.copy(mid);
+        medianGrass.position.y += 0.06;
+        medianGrass.lookAt(v2);
+        scene.add(medianGrass);
+
+        // Double yellow lane markings on both sides of median
+        [-1.0, 1.0].forEach(offsetDist => {
+          const numDashes = Math.max(1, Math.floor(distance / 5));
+          for (let d = 0; d < numDashes; d++) {
+            const t = (d + 0.5) / numDashes;
+            const dashPos = new THREE.Vector3().lerpVectors(v1, v2, t).add(new THREE.Vector3().copy(perp).multiplyScalar(offsetDist));
+            dashPos.y += 0.10;
+
+            const dashGeom = new THREE.BoxGeometry(0.2, 0.02, Math.min(2.5, distance / numDashes * 0.7));
+            const dashMesh = new THREE.Mesh(dashGeom, lineMat);
+            dashMesh.position.copy(dashPos);
+            dashMesh.lookAt(new THREE.Vector3().copy(v2).add(new THREE.Vector3().copy(perp).multiplyScalar(offsetDist)));
+            scene.add(dashMesh);
+          }
+        });
+
+        // Farolas (Voxel Street Lamps) along Ramirez every ~18 units
+        const lampInterval = 18;
+        const numLamps = Math.floor(distance / lampInterval);
+        for (let l = 0; l < numLamps; l++) {
+          const t = (l + 0.5) / Math.max(1, numLamps);
+          const lampPos = new THREE.Vector3().lerpVectors(v1, v2, t);
+          lampPos.y += 0.16;
+
+          // Lamp post pole
+          const poleGeom = new THREE.BoxGeometry(0.2, 3.2, 0.2);
+          const poleMesh = new THREE.Mesh(poleGeom, lampPostMat);
+          poleMesh.position.set(lampPos.x, lampPos.y + 1.6, lampPos.z);
+          scene.add(poleMesh);
+
+          // Horizontal arm
+          const armGeom = new THREE.BoxGeometry(1.4, 0.15, 0.15);
+          const armMesh = new THREE.Mesh(armGeom, lampPostMat);
+          armMesh.position.set(lampPos.x, lampPos.y + 3.1, lampPos.z);
+          scene.add(armMesh);
+
+          // Dual lantern bulbs
+          [-0.6, 0.6].forEach(side => {
+            const bulbGeom = new THREE.BoxGeometry(0.3, 0.25, 0.3);
+            const bulbMesh = new THREE.Mesh(bulbGeom, lampBulbMat);
+            bulbMesh.position.set(lampPos.x + side, lampPos.y + 2.9, lampPos.z);
+            scene.add(bulbMesh);
+          });
+        }
+      } else {
+        // Dashed yellow centerline for normal avenues
+        const numDashes = Math.max(1, Math.floor(distance / 6));
+        for (let d = 0; d < numDashes; d++) {
+          const t = (d + 0.5) / numDashes;
+          const dashPos = new THREE.Vector3().lerpVectors(v1, v2, t);
+          dashPos.y += 0.09;
+
+          const dashGeom = new THREE.BoxGeometry(0.25, 0.02, Math.min(2.5, distance / numDashes * 0.6));
+          const dashMesh = new THREE.Mesh(dashGeom, lineMat);
+          dashMesh.position.copy(dashPos);
+          dashMesh.lookAt(v2);
+          scene.add(dashMesh);
+        }
       }
     }
   });
@@ -1433,20 +1686,28 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
   const gridX = [-70, -45, -20, 5, 30, 55, 80, 105];
   const gridZ = [-50, -25, 0, 25, 50, 75, 100];
 
-  // North-South streets
+  // North-South streets (check isLand before placing)
   gridX.forEach(x => {
+    const latStart = PARANA_ORIGIN.lat - (-50) / 11088.0;
+    const lngStart = PARANA_ORIGIN.lng + x / 9468.0;
+    if (!isLand(latStart, lngStart)) return;
+
     const sGeom = new THREE.BoxGeometry(2.4, 0.12, 150);
     const sMesh = new THREE.Mesh(sGeom, secondaryMat);
-    sMesh.position.set(x, 4.07, 25);
+    sMesh.position.set(x, 8.58, 25);
     sMesh.receiveShadow = true;
     scene.add(sMesh);
   });
 
-  // East-West streets
+  // East-West streets (check isLand before placing)
   gridZ.forEach(z => {
+    const latZ = PARANA_ORIGIN.lat - z / 11088.0;
+    const lngZ = PARANA_ORIGIN.lng + 17.5 / 9468.0;
+    if (!isLand(latZ, lngZ)) return;
+
     const sGeom = new THREE.BoxGeometry(175, 0.12, 2.4);
     const sMesh = new THREE.Mesh(sGeom, secondaryMat);
-    sMesh.position.set(17.5, 4.07, z);
+    sMesh.position.set(17.5, 8.58, z);
     sMesh.receiveShadow = true;
     scene.add(sMesh);
   });

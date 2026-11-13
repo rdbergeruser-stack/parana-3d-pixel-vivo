@@ -32,8 +32,8 @@ const OVERPASS_QUERY = `[out:json][timeout:35];
   way["place"="islet"](${BBOX});
   way["place"="island"](${BBOX});
 
-  // 3. Arteries
-  way["highway"~"trunk|primary|secondary"]["name"~"Ramírez|Almafuerte|Racedo|Urquiza|San Martín|Laurencena|Acceso Norte|Costanera",i](${BBOX});
+  // 3. Arteries & Main Boulevards (including Av. Ramírez vertebral spine)
+  way["highway"~"trunk|primary|secondary"]["name"~"Ramírez|Almafuerte|Racedo|Moreno|Ejército|Don Bosco|Zanni|Laurencena|Acceso Norte|Urquiza|San Martín|Rivadavia|Alameda",i](${BBOX});
 
   // 4. Parks
   way["leisure"="park"]["name"~"Urquiza|Varisco|Nuevo|Gazzano|Thompson",i](${BBOX});
@@ -85,17 +85,17 @@ function getAccurateFallbackData() {
   console.log('🔄 Utilizando dataset geográfico base real verificado de Paraná...');
   return {
     coastline: [
-      [-31.7067, -60.5050],
-      [-31.7090, -60.5120],
-      [-31.7130, -60.5210],
+      [-31.7067, -60.5050], // Túnel Subfluvial
+      [-31.7100, -60.5130], // Punta Thompson norte
+      [-31.7135, -60.5180], // Thompson playa
       [-31.7161, -60.5278], // Puerto Nuevo
       [-31.7175, -60.5340], // Monumento al Mate
       [-31.7178, -60.5392], // Balneario Municipal
-      [-31.7188, -60.5422], // Club Náutico
-      [-31.7204, -60.5398], // Mirador Patito Sirirí / Letras Paraná
-      [-31.7240, -60.5440], // Curva Parque Urquiza
-      [-31.7280, -60.5620], // Bajada Grande
-      [-31.7340, -60.5650]
+      [-31.7195, -60.5422], // Club Náutico / pie de barranca
+      [-31.7225, -60.5450], // Curva Costanera Oeste
+      [-31.7250, -60.5530], // Punta Parque Varisco
+      [-31.7280, -60.5620], // Bajada Grande puerto
+      [-31.7380, -60.5670]  // Bajada Grande sur
     ],
     islands: [
       {
@@ -123,34 +123,37 @@ function getAccurateFallbackData() {
     ],
     arteries: [
       {
-        name: 'Costanera Laurencena',
-        category: 'costanera',
+        name: 'Av. Francisco Ramírez (Columna Vertebral)',
+        category: 'columna-vertebral',
         coordinates: [
-          [-31.7188, -60.5422],
-          [-31.7178, -60.5392],
-          [-31.7175, -60.5340],
-          [-31.7161, -60.5278]
-        ]
-      },
-      {
-        name: 'Av. Francisco Ramírez',
-        category: 'avenida',
-        coordinates: [
-          [-31.7120, -60.5180],
-          [-31.7250, -60.5210],
-          [-31.7350, -60.5220],
-          [-31.7456, -60.5228],
-          [-31.7650, -60.5240]
+          [-31.7115, -60.5185], // Inicio norte cerca de Costanera y Thompson
+          [-31.7180, -60.5195], // Cruce Av. Don Bosco
+          [-31.7250, -60.5208], // Cruce Nogoyá / La Paz
+          [-31.7350, -60.5218], // Cinco Esquinas (Cruce Av. Almafuerte / Gualeguaychú)
+          [-31.7410, -60.5222], // Terminal de Ómnibus
+          [-31.7456, -60.5228], // Estación Central de Trenes / Bv. Racedo
+          [-31.7540, -60.5235], // Cruce Av. de las Américas
+          [-31.7650, -60.5245]  // Salida sur hacia Ruta 11
         ]
       },
       {
         name: 'Av. Almafuerte',
         category: 'avenida',
         coordinates: [
-          [-31.7360, -60.5210],
-          [-31.7380, -60.5050],
-          [-31.7420, -60.4850],
-          [-31.7510, -60.4650]
+          [-31.7350, -60.5218], // Cinco Esquinas
+          [-31.7360, -60.5120],
+          [-31.7380, -60.4950],
+          [-31.7420, -60.4750]
+        ]
+      },
+      {
+        name: 'Costanera Laurencena',
+        category: 'costanera',
+        coordinates: [
+          [-31.7195, -60.5422],
+          [-31.7178, -60.5392],
+          [-31.7175, -60.5340],
+          [-31.7161, -60.5278]
         ]
       },
       {
@@ -159,8 +162,53 @@ function getAccurateFallbackData() {
         coordinates: [
           [-31.7440, -60.5330],
           [-31.7445, -60.5280],
-          [-31.7450, -60.5245],
-          [-31.7456, -60.5228]
+          [-31.7450, -60.5245], // C.C. Juan L. Ortiz
+          [-31.7456, -60.5228]  // Cruce Av. Ramírez / Estación
+        ]
+      },
+      {
+        name: 'Bulevar José María Moreno',
+        category: 'bulevar',
+        coordinates: [
+          [-31.7328, -60.5450],
+          [-31.7380, -60.5380],
+          [-31.7440, -60.5330]
+        ]
+      },
+      {
+        name: 'Av. Don Bosco',
+        category: 'avenida',
+        coordinates: [
+          [-31.7230, -60.5210],
+          [-31.7210, -60.5100],
+          [-31.7180, -60.4950]
+        ]
+      },
+      {
+        name: 'Av. Pedro Zanni',
+        category: 'avenida',
+        coordinates: [
+          [-31.7360, -60.5050],
+          [-31.7480, -60.5070],
+          [-31.7620, -60.5090]
+        ]
+      },
+      {
+        name: 'Av. Ejército',
+        category: 'avenida',
+        coordinates: [
+          [-31.7450, -60.5450],
+          [-31.7550, -60.5470],
+          [-31.7650, -60.5490]
+        ]
+      },
+      {
+        name: 'Alameda de la Federación - Rivadavia',
+        category: 'avenida',
+        coordinates: [
+          [-31.7285, -60.5265],
+          [-31.7240, -60.5320],
+          [-31.7215, -60.5375]
         ]
       },
       {
@@ -180,6 +228,28 @@ function getAccurateFallbackData() {
           [-31.7120, -60.4980],
           [-31.7200, -60.4900],
           [-31.7250, -60.4800]
+        ]
+      }
+    ],
+    railways: [
+      {
+        id: 'central-line',
+        name: 'Línea Central Urquiza (Racedo - Estación - Juanele)',
+        coordinates: [
+          [-31.7440, -60.5330],
+          [-31.7445, -60.5280],
+          [-31.7450, -60.5245], // C.C. Juan L. Ortiz andén
+          [-31.7456, -60.5228]  // Estación Central de Trenes
+        ]
+      },
+      {
+        id: 'bajada-grande-line',
+        name: 'Ramal Bajada Grande',
+        coordinates: [
+          [-31.7440, -60.5330],
+          [-31.7390, -60.5420],
+          [-31.7340, -60.5520],
+          [-31.7280, -60.5620]  // Puerto Histórico Bajada Grande
         ]
       }
     ],
@@ -234,7 +304,8 @@ function processElements(elements) {
     coastline: [],
     islands: [],
     arteries: [],
-    parks: []
+    parks: [],
+    railways: []
   };
 
   const coastPoints = [];
@@ -277,6 +348,15 @@ function processElements(elements) {
         polygon: coords
       });
     }
+
+    // 5. Railways
+    if (tags.railway === 'rail') {
+      result.railways.push({
+        id: 'urquiza-rail-' + (el.id || Math.random()),
+        name: name || 'Ferrocarril General Urquiza',
+        coordinates: coords
+      });
+    }
   }
 
   // Deduplicate coastline
@@ -302,6 +382,7 @@ async function main() {
     if (!finalData.islands.length) finalData.islands = fallback.islands;
     if (!finalData.arteries.length) finalData.arteries = fallback.arteries;
     if (!finalData.parks.length) finalData.parks = fallback.parks;
+    if (!finalData.railways || !finalData.railways.length) finalData.railways = fallback.railways;
   } else {
     finalData = getAccurateFallbackData();
   }
