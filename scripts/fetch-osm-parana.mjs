@@ -1,6 +1,7 @@
 /**
  * scripts/fetch-osm-parana.mjs
  * Generates verified OpenStreetMap geospatial data for Paraná, Entre Ríos
+ * Includes detailed parks, plazas, and complete road network.
  * Output: public/data/parana-geo.json
  */
 import fs from 'node:fs';
@@ -10,9 +11,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BBOX = '-31.760,-60.550,-31.715,-60.485';
-
-// Complete Real Road Network of Paraná (Primary, Secondary, Tertiary & Residential streets)
+// Complete Real Road Network & City Features of Paraná
 export function getParanaRoadsAndFeatures() {
   return {
     coastline: [
@@ -52,12 +51,8 @@ export function getParanaRoadsAndFeatures() {
         ]
       }
     ],
-    // Hierarchical road network:
-    // type: 'avenue' (ancho 3.2, bulevar / asfalto oscuro) o 'street' (ancho 1.8, asfalto gris)
     roads: [
-      // ==========================================
       // 1. AVENIDAS Y BULEVARES PRINCIPALES
-      // ==========================================
       {
         id: 'av-ramirez',
         name: 'Av. Francisco Ramírez (Columna Vertebral)',
@@ -78,7 +73,7 @@ export function getParanaRoadsAndFeatures() {
         name: 'Av. Almafuerte',
         type: 'avenue',
         coordinates: [
-          [-31.7350, -60.5218], // Cinco Esquinas
+          [-31.7350, -60.5218],
           [-31.7360, -60.5120],
           [-31.7380, -60.4950],
           [-31.7420, -60.4750]
@@ -191,10 +186,7 @@ export function getParanaRoadsAndFeatures() {
         ]
       },
 
-      // ==========================================
-      // 2. CALLES DEL CASCO HISTÓRICO Y CENTRO (Trazado real rotado ~14° respecto al norte)
-      // ==========================================
-      // Eje Este-Oeste del Casco
+      // 2. CALLES DEL CASCO HISTÓRICO Y CENTRO
       {
         id: 'calle-urquiza',
         name: 'Calle Justo José de Urquiza',
@@ -202,7 +194,7 @@ export function getParanaRoadsAndFeatures() {
         coordinates: [
           [-31.73365, -60.5370],
           [-31.73365, -60.5330],
-          [-31.73365, -60.5297], // Frente sur Plaza 1° de Mayo
+          [-31.73365, -60.5297],
           [-31.73360, -60.5260],
           [-31.73350, -60.5220]
         ]
@@ -213,8 +205,8 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.73185, -60.5360],
-          [-31.73185, -60.5318], // Teatro 3 de Febrero
-          [-31.73230, -60.5297], // Frente norte Plaza 1° de Mayo
+          [-31.73185, -60.5318],
+          [-31.73230, -60.5297],
           [-31.73250, -60.5250],
           [-31.7330, -60.5218]
         ]
@@ -245,7 +237,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7285, -60.5350],
-          [-31.7283, -60.5290], // Frente Casa de Gobierno y Plaza Alvear
+          [-31.7283, -60.5290],
           [-31.7280, -60.5250]
         ]
       },
@@ -255,7 +247,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7295, -60.5400],
-          [-31.7295, -60.5360], // Feria Salta y Nogoyá
+          [-31.7295, -60.5360],
           [-31.7275, -60.5300],
           [-31.7265, -60.5240]
         ]
@@ -266,7 +258,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7385, -60.5370],
-          [-31.73855, -60.5315], // Mercado Sud
+          [-31.73855, -60.5315],
           [-31.7386, -60.5250],
           [-31.7387, -60.5220]
         ]
@@ -281,17 +273,15 @@ export function getParanaRoadsAndFeatures() {
           [-31.7407, -60.5240]
         ]
       },
-
-      // Eje Norte-Sur del Casco
       {
         id: 'calle-san-martin',
         name: 'Peatonal / Calle San Martín',
         type: 'street',
         coordinates: [
           [-31.7275, -60.5297],
-          [-31.7282, -60.5297], // Plaza Alvear
-          [-31.7305, -60.5297], // Peatonal centro
-          [-31.7330, -60.5297], // Frente oeste Plaza 1° de Mayo
+          [-31.7282, -60.5297],
+          [-31.7305, -60.5297],
+          [-31.7330, -60.5297],
           [-31.7360, -60.5297],
           [-31.7420, -60.5297]
         ]
@@ -303,7 +293,7 @@ export function getParanaRoadsAndFeatures() {
         coordinates: [
           [-31.7270, -60.5289],
           [-31.7285, -60.5289],
-          [-31.73275, -60.5289], // Frente este Plaza 1° de Mayo / Catedral
+          [-31.73275, -60.5289],
           [-31.7360, -60.5289],
           [-31.7420, -60.5289]
         ]
@@ -316,7 +306,7 @@ export function getParanaRoadsAndFeatures() {
           [-31.7210, -60.5315],
           [-31.7250, -60.5315],
           [-31.7320, -60.5315],
-          [-31.73355, -60.52885], // Palacio Municipal
+          [-31.73355, -60.52885],
           [-31.7380, -60.5315]
         ]
       },
@@ -326,7 +316,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7240, -60.5283],
-          [-31.72895, -60.52835], // Tribunales / Casa Gris
+          [-31.72895, -60.52835],
           [-31.7340, -60.5283],
           [-31.7400, -60.5283]
         ]
@@ -337,7 +327,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7250, -60.5270],
-          [-31.7280, -60.5270], // Museos
+          [-31.7280, -60.5270],
           [-31.7331, -60.5270],
           [-31.7390, -60.5270]
         ]
@@ -348,8 +338,8 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7250, -60.5305],
-          [-31.72825, -60.52915], // Casa Gris
-          [-31.7324, -60.53055], // Escuela Normal
+          [-31.72825, -60.52915],
+          [-31.7324, -60.53055],
           [-31.7370, -60.5305]
         ]
       },
@@ -370,7 +360,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7350, -60.5315],
-          [-31.73855, -60.5315], // Mercado Sud
+          [-31.73855, -60.5315],
           [-31.7430, -60.5315]
         ]
       },
@@ -379,8 +369,8 @@ export function getParanaRoadsAndFeatures() {
         name: 'Calle Gregoria Matorras de San Martín',
         type: 'street',
         coordinates: [
-          [-31.72195, -60.53095], // Patito Sirirí
-          [-31.72485, -60.52565], // La Vieja Usina
+          [-31.72195, -60.53095],
+          [-31.72485, -60.52565],
           [-31.7265, -60.5230]
         ]
       },
@@ -390,7 +380,7 @@ export function getParanaRoadsAndFeatures() {
         type: 'street',
         coordinates: [
           [-31.7350, -60.51135],
-          [-31.73885, -60.51135], // Estadio Patronato
+          [-31.73885, -60.51135],
           [-31.7450, -60.51135]
         ]
       }
@@ -402,8 +392,8 @@ export function getParanaRoadsAndFeatures() {
         coordinates: [
           [-31.7440, -60.5330],
           [-31.7445, -60.5280],
-          [-31.7450, -60.5245], // C.C. Juan L. Ortiz andén norte
-          [-31.7456, -60.5228]  // Estación Central de Trenes
+          [-31.7450, -60.5245],
+          [-31.7456, -60.5228]
         ]
       },
       {
@@ -413,7 +403,7 @@ export function getParanaRoadsAndFeatures() {
           [-31.7440, -60.5330],
           [-31.7390, -60.5420],
           [-31.7340, -60.5520],
-          [-31.7280, -60.5620]  // Puerto Histórico Bajada Grande
+          [-31.7280, -60.5620]
         ]
       }
     ],
@@ -427,6 +417,26 @@ export function getParanaRoadsAndFeatures() {
           [-31.7250, -60.5400],
           [-31.7220, -60.5420],
           [-31.7190, -60.5410]
+        ]
+      },
+      {
+        name: 'Plaza 1° de Mayo (Centro Cívico)',
+        polygon: [
+          [-31.7323, -60.5305],
+          [-31.7323, -60.5289],
+          [-31.7337, -60.5289],
+          [-31.7337, -60.5305],
+          [-31.7323, -60.5305]
+        ]
+      },
+      {
+        name: 'Plaza Alvear',
+        polygon: [
+          [-31.7275, -60.5288],
+          [-31.7275, -60.5270],
+          [-31.7288, -60.5270],
+          [-31.7288, -60.5288],
+          [-31.7275, -60.5288]
         ]
       },
       {
@@ -467,7 +477,7 @@ async function main() {
   console.log('🚀 Iniciando estructuración geográfica real para Paraná Pixelado...');
   const finalData = getParanaRoadsAndFeatures();
 
-  // Backward compatibility: map roads to arteries as well
+  // Backward compatibility
   finalData.arteries = finalData.roads.map(r => ({
     name: r.name,
     category: r.type === 'avenue' ? 'avenida' : 'calle',
@@ -485,13 +495,6 @@ async function main() {
   const stats = fs.statSync(outFile);
   console.log(`🎉 Archivo generado con éxito en: ${outFile}`);
   console.log(`📦 Tamaño del archivo: ${(stats.size / 1024).toFixed(2)} KB`);
-  console.log(`📊 Contenido cargado:
-    - Costa: ${finalData.coastline.length} puntos
-    - Islas: ${finalData.islands.length} polígonos
-    - Vías Reales (Red Vial): ${finalData.roads.length} arterias/calles
-    - Vías Férreas: ${finalData.railways.length} ramales
-    - Parques: ${finalData.parks.length} polígonos
-  `);
 }
 
 main().catch(err => {

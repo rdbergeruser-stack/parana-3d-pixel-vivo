@@ -284,10 +284,10 @@ export default function ParanaMap3D() {
     let animationFrameId: number;
     let isDisposed = false;
 
-    // 1. Scene, Camera, Renderer
+    // 1. Scene, Camera, Renderer (Clean Crisp Diorama Look, NO foggy washout)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#f3ede2');
-    scene.fog = new THREE.FogExp2('#f3ede2', 0.0015);
+    scene.background = new THREE.Color('#f5efe6');
+    // NO scene.fog: clean crisp miniature diorama aesthetic
 
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -306,7 +306,7 @@ export default function ParanaMap3D() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.18;
     container.appendChild(renderer.domElement);
 
     // 2. OrbitControls
@@ -330,18 +330,19 @@ export default function ParanaMap3D() {
     renderer.domElement.addEventListener('pointerdown', cancelCameraAnimation);
     renderer.domElement.addEventListener('touchstart', cancelCameraAnimation, { passive: true });
 
-    // 3. Warm Litoral Diorama Lighting (Warm sunny afternoon over the Paraná river)
-    const ambientLight = new THREE.HemisphereLight('#fff7ed', '#d6c7b2', 0.85);
+    // 3. Crisp High-Contrast Diorama Lighting
+    // DirectionalLight (2.2) for bright sunlit surfaces + moderate ambient/hemi light (0.6) for deep clear shadows
+    const ambientLight = new THREE.HemisphereLight('#ffffff', '#c7b9a5', 0.6);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight('#fff1d6', 1.6);
-    sunLight.position.set(190, 260, 130);
+    const sunLight = new THREE.DirectionalLight('#fff8eb', 2.2);
+    sunLight.position.set(210, 280, 140);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 50;
-    sunLight.shadow.camera.far = 700;
-    const shadowD = 280;
+    sunLight.shadow.camera.far = 750;
+    const shadowD = 320;
     sunLight.shadow.camera.left = -shadowD;
     sunLight.shadow.camera.right = shadowD;
     sunLight.shadow.camera.top = shadowD;
@@ -349,19 +350,19 @@ export default function ParanaMap3D() {
     sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
-    // River bounce / ambient fill light (subtle sky blue warmth)
-    const riverBounceLight = new THREE.DirectionalLight('#bae6fd', 0.3);
-    riverBounceLight.position.set(-180, 90, -140);
+    // River bounce / subtle sky fill light
+    const riverBounceLight = new THREE.DirectionalLight('#60a5fa', 0.35);
+    riverBounceLight.position.set(-200, 100, -150);
     scene.add(riverBounceLight);
 
     // 4. Artisanal Diorama Cutout Base (Layered physical geological strata)
     const baseGroup = new THREE.Group();
 
     // Layer 1: Barranca Clay Stratum (y = -3 to 0)
-    const stratum1Geom = new THREE.BoxGeometry(684, 4, 564);
+    const stratum1Geom = new THREE.BoxGeometry(700, 4, 580);
     const stratum1Mat = new THREE.MeshStandardMaterial({
-      color: '#b58d67', // Earthy clay
-      roughness: 0.9,
+      color: '#b77957', // Rich terracota clay
+      roughness: 0.85,
       metalness: 0.05
     });
     const stratum1Mesh = new THREE.Mesh(stratum1Geom, stratum1Mat);
@@ -370,7 +371,7 @@ export default function ParanaMap3D() {
     baseGroup.add(stratum1Mesh);
 
     // Layer 2: Deep Geological Rock / Sedimentary Stratum (y = -10 to -3)
-    const stratum2Geom = new THREE.BoxGeometry(682, 7, 562);
+    const stratum2Geom = new THREE.BoxGeometry(696, 7, 576);
     const stratum2Mat = new THREE.MeshStandardMaterial({
       color: '#785942', // Deep earth / rock
       roughness: 0.95,
@@ -382,9 +383,9 @@ export default function ParanaMap3D() {
     baseGroup.add(stratum2Mesh);
 
     // Layer 3: Craftsman Charcoal Plinth Pedestal (y = -22 to -10)
-    const plinthGeom = new THREE.BoxGeometry(690, 12, 570);
+    const plinthGeom = new THREE.BoxGeometry(704, 12, 584);
     const plinthMat = new THREE.MeshStandardMaterial({
-      color: '#292524', // Warm charcoal craftsman timber
+      color: '#1e1b18', // Deep charcoal craftsman plinth
       roughness: 0.85,
       metalness: 0.15
     });
@@ -395,14 +396,14 @@ export default function ParanaMap3D() {
 
     scene.add(baseGroup);
 
-    // 5. River Water Plane (Y = 0) with gentle pastel blue-green and foam rim
-    const waterGeom = new THREE.PlaneGeometry(900, 750, 64, 64);
+    // 5. River Water Plane (Y = 0) with Rich Vibrant Clean Blue (#2b6cb0 / #3182ce)
+    const waterGeom = new THREE.PlaneGeometry(950, 800, 32, 32);
     const waterMat = new THREE.MeshStandardMaterial({
-      color: '#3b82a6',
-      roughness: 0.22,
-      metalness: 0.15,
+      color: '#2b6cb0', // Rich clean blue
+      roughness: 0.25,
+      metalness: 0.18,
       transparent: true,
-      opacity: 0.92
+      opacity: 0.94
     });
     const waterMesh = new THREE.Mesh(waterGeom, waterMat);
     waterMesh.rotation.x = -Math.PI / 2;
@@ -453,8 +454,9 @@ export default function ParanaMap3D() {
           engineRef.current.doradoMesh = dorado;
         }
 
-        // 3. Build Voxel Terrain with strict collision avoidance
-        buildVoxelTerrain(scene, geoData, exclusions, roadIndex);
+        // 3. Build Smooth Extruded Landmass (Mainland, Islands, and Parks)
+        buildExtrudedLandmass(scene, geoData);
+        buildUrbanCityBlocks(scene, geoData, exclusions, roadIndex);
         buildArteries(scene, geoData);
         buildRailways(scene, geoData);
         buildFlora(scene, geoData);
@@ -1413,170 +1415,358 @@ function buildRoadSpatialIndex(geoData: GeoFeatureData): RoadNetworkSpatialIndex
 }
 
 /**
- * 1. Build Quantized Voxel Terrain with stepped Parque Urquiza Barrancas
- * Strict Road & Monument Collision Exclusion:
- * - NO generic buildings within (roadHalfWidth + buildingRadius + 0.8)
- * - NO generic buildings within (monumentRadius + 2.0)
+ * 1. Build Smooth Extruded Landmass (Mainland, Islands, and Parks)
+ * - ExtrudeGeometry with bevelEnabled: true and smooth bevels replaces staircase voxels.
+ * - Mainland Base (Costanera Baja & continental plinth) y = 0 to 1.8.
+ * - Ciudad Alta Plateau & Parque Urquiza Barrancas y = 1.8 to 8.5 with rich terracotta cliff edge (#b77957).
+ * - Smooth river islands (Islote Curupí, Isla Puente) and green park extrusions.
  */
-function buildVoxelTerrain(
+function buildExtrudedLandmass(scene: THREE.Scene, geoData: GeoFeatureData) {
+  // A. River Islands (Curupí & Puente) with organic bevel
+  if (geoData.islands) {
+    const islandMat = new THREE.MeshStandardMaterial({
+      color: '#8cb369', // Fresh island vegetation
+      roughness: 0.8,
+      metalness: 0.05
+    });
+
+    geoData.islands.forEach(island => {
+      if (!island.polygon || island.polygon.length < 3) return;
+
+      const shape = new THREE.Shape();
+      const p0 = projectTo3D(island.polygon[0][0], island.polygon[0][1]);
+      shape.moveTo(p0.x, -p0.z);
+
+      for (let i = 1; i < island.polygon.length; i++) {
+        const pt = projectTo3D(island.polygon[i][0], island.polygon[i][1]);
+        shape.lineTo(pt.x, -pt.z);
+      }
+      shape.closePath();
+
+      const geom = new THREE.ExtrudeGeometry(shape, {
+        depth: 1.4,
+        bevelEnabled: true,
+        bevelThickness: 0.35,
+        bevelSize: 0.35,
+        bevelSegments: 2
+      });
+      geom.rotateX(-Math.PI / 2);
+
+      const mesh = new THREE.Mesh(geom, islandMat);
+      mesh.position.y = 0.05;
+      mesh.receiveShadow = true;
+      mesh.castShadow = true;
+      scene.add(mesh);
+    });
+  }
+
+  // B. Mainland Base Shelf (Costanera Baja & Continental Plinth: y = 0 to 1.8)
+  if (geoData.coastline && geoData.coastline.length >= 2) {
+    const coastShape = new THREE.Shape();
+    const pStart = projectTo3D(geoData.coastline[0][0], geoData.coastline[0][1]);
+    const pEnd = projectTo3D(geoData.coastline[geoData.coastline.length - 1][0], geoData.coastline[geoData.coastline.length - 1][1]);
+
+    const xMin = -360;
+    const xMax = 360;
+    const zMax = 300;
+
+    coastShape.moveTo(pStart.x, -pStart.z);
+    for (let i = 1; i < geoData.coastline.length; i++) {
+      const pt = projectTo3D(geoData.coastline[i][0], geoData.coastline[i][1]);
+      coastShape.lineTo(pt.x, -pt.z);
+    }
+    // Close through landmass bounding boundaries (South & East)
+    coastShape.lineTo(xMin, -pEnd.z);
+    coastShape.lineTo(xMin, -zMax);
+    coastShape.lineTo(xMax, -zMax);
+    coastShape.lineTo(xMax, -pStart.z);
+    coastShape.closePath();
+
+    const baseGeom = new THREE.ExtrudeGeometry(coastShape, {
+      depth: 1.8,
+      bevelEnabled: true,
+      bevelThickness: 0.4,
+      bevelSize: 0.4,
+      bevelSegments: 2
+    });
+    baseGeom.rotateX(-Math.PI / 2);
+
+    const baseMat = new THREE.MeshStandardMaterial({
+      color: '#e8dfd1', // Clean warm cream diorama base
+      roughness: 0.82,
+      metalness: 0.04
+    });
+
+    const baseMesh = new THREE.Mesh(baseGeom, baseMat);
+    baseMesh.position.y = 0.04;
+    baseMesh.receiveShadow = true;
+    baseMesh.castShadow = true;
+    scene.add(baseMesh);
+
+    // C. Ciudad Alta High Plateau & Parque Urquiza Barrancas (y = 1.8 to 8.5)
+    // Offset ridge contour ~35-50 meters south of the river coastline
+    const cliffShape = new THREE.Shape();
+    const ridgeCoords = geoData.coastline.map(([lat, lng]) => {
+      return [lat - 0.0035, lng + 0.0015] as [number, number];
+    });
+
+    const pRidgeStart = projectTo3D(ridgeCoords[0][0], ridgeCoords[0][1]);
+    const pRidgeEnd = projectTo3D(ridgeCoords[ridgeCoords.length - 1][0], ridgeCoords[ridgeCoords.length - 1][1]);
+
+    cliffShape.moveTo(pRidgeStart.x, -pRidgeStart.z);
+    for (let i = 1; i < ridgeCoords.length; i++) {
+      const pt = projectTo3D(ridgeCoords[i][0], ridgeCoords[i][1]);
+      cliffShape.lineTo(pt.x, -pt.z);
+    }
+    cliffShape.lineTo(xMin, -pRidgeEnd.z);
+    cliffShape.lineTo(xMin, -zMax);
+    cliffShape.lineTo(xMax, -zMax);
+    cliffShape.lineTo(xMax, -pRidgeStart.z);
+    cliffShape.closePath();
+
+    const cliffGeom = new THREE.ExtrudeGeometry(cliffShape, {
+      depth: 6.7,
+      bevelEnabled: true,
+      bevelThickness: 0.85,
+      bevelSize: 0.85,
+      bevelSegments: 3
+    });
+    cliffGeom.rotateX(-Math.PI / 2);
+
+    // Rich terracotta clay cliff with warm pavement top
+    const cliffMat = new THREE.MeshStandardMaterial({
+      color: '#b77957', // Rich warm terracotta barranca
+      roughness: 0.85,
+      metalness: 0.05
+    });
+
+    const cliffMesh = new THREE.Mesh(cliffGeom, cliffMat);
+    cliffMesh.position.y = 1.8;
+    cliffMesh.receiveShadow = true;
+    cliffMesh.castShadow = true;
+    scene.add(cliffMesh);
+  }
+
+  // D. Parks & Plazas (Extruded crisp green carpets)
+  if (geoData.parks) {
+    geoData.parks.forEach(park => {
+      if (!park.polygon || park.polygon.length < 3) return;
+
+      const pShape = new THREE.Shape();
+      const p0 = projectTo3D(park.polygon[0][0], park.polygon[0][1]);
+      pShape.moveTo(p0.x, -p0.z);
+
+      for (let i = 1; i < park.polygon.length; i++) {
+        const pt = projectTo3D(park.polygon[i][0], park.polygon[i][1]);
+        pShape.lineTo(pt.x, -pt.z);
+      }
+      pShape.closePath();
+
+      const pGeom = new THREE.ExtrudeGeometry(pShape, {
+        depth: 0.22,
+        bevelEnabled: true,
+        bevelThickness: 0.12,
+        bevelSize: 0.12,
+        bevelSegments: 1
+      });
+      pGeom.rotateX(-Math.PI / 2);
+
+      const isPlaza = park.name.toLowerCase().includes('plaza');
+      const pMat = new THREE.MeshStandardMaterial({
+        color: isPlaza ? '#38a169' : '#48bb78', // Vivid lively green
+        roughness: 0.78
+      });
+
+      const avgElev = getElevation(park.polygon[0][0], park.polygon[0][1]);
+      const mesh = new THREE.Mesh(pGeom, pMat);
+      mesh.position.y = avgElev > 5.0 ? 8.52 : 1.84;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+    });
+  }
+}
+
+/**
+ * 2. Build Continuous Urban City Blocks (Manzanas) & Perimeter Building Clusters
+ * - Never isolated floating cubes.
+ * - Clean damero street layout with light stone sidewalks (#d6d3d1) and graphite asphalt (#334155).
+ * - Perimeter clusters of 6-10 adjacent buildings per block:
+ *   - Microcentro / Casco histórico (dist < 75): 7 to 20 floors (height: 7 to 20 units).
+ *   - Intermediate: 3 to 8 floors (height: 3.5 to 8 units).
+ *   - Residential: 1 to 3 floors (height: 1.8 to 3.5 units).
+ *   - Clean diorama palette: chalk white (#faf8f5), warm cream (#f0eae1), sand (#dfd5c6), terracotta (#c05621), slate (#475569).
+ */
+function buildUrbanCityBlocks(
   scene: THREE.Scene,
   geoData: GeoFeatureData,
   exclusions: { x: number; z: number; r: number }[],
   roadIndex: RoadNetworkSpatialIndex
 ) {
-  // Grid parameters (1 unit ≈ 10 meters)
-  const step = 6.0; // 60m blocks
-  const xMin = -280;
-  const xMax = 320;
-  const zMin = -240;
-  const zMax = 240;
+  const blockStep = 12.0; // 120m block spacing
+  const xMin = -240;
+  const xMax = 280;
+  const zMin = -200;
+  const zMax = 220;
 
-  const cols = Math.ceil((xMax - xMin) / step);
-  const rows = Math.ceil((zMax - zMin) / step);
-  const maxInstances = cols * rows;
+  const cols = Math.ceil((xMax - xMin) / blockStep);
+  const rows = Math.ceil((zMax - zMin) / blockStep);
+  const maxBlocks = cols * rows;
 
-  // Geometries for Terrain Voxels
-  const boxGeom = new THREE.BoxGeometry(step * 0.96, 1.0, step * 0.96);
-  const terrainMat = new THREE.MeshStandardMaterial({
-    roughness: 0.85,
+  // Sidewalk base mesh
+  const sidewalkGeom = new THREE.BoxGeometry(9.6, 0.22, 9.6);
+  const sidewalkMat = new THREE.MeshStandardMaterial({
+    color: '#d6d3d1', // Light stone sidewalk pavement
+    roughness: 0.88,
     metalness: 0.05
   });
+  const sidewalkMesh = new THREE.InstancedMesh(sidewalkGeom, sidewalkMat, maxBlocks);
+  sidewalkMesh.receiveShadow = true;
 
-  const instancedMesh = new THREE.InstancedMesh(boxGeom, terrainMat, maxInstances);
-  instancedMesh.castShadow = true;
-  instancedMesh.receiveShadow = true;
-
-  // Urban filler buildings mesh
-  const bldgGeom = new THREE.BoxGeometry(step * 0.72, 1.0, step * 0.72);
+  // Building cluster mesh
+  const bldgGeom = new THREE.BoxGeometry(1.0, 1.0, 1.0);
   const bldgMat = new THREE.MeshStandardMaterial({
-    roughness: 0.65,
-    metalness: 0.1
+    roughness: 0.68,
+    metalness: 0.08
   });
-  const bldgMesh = new THREE.InstancedMesh(bldgGeom, bldgMat, maxInstances);
+  const maxBuildings = maxBlocks * 10;
+  const bldgMesh = new THREE.InstancedMesh(bldgGeom, bldgMat, maxBuildings);
   bldgMesh.castShadow = true;
   bldgMesh.receiveShadow = true;
 
-  const color = new THREE.Color();
   const dummy = new THREE.Object3D();
+  const color = new THREE.Color();
 
-  let terrainCount = 0;
-  let bldgCount = 0;
-
-  // Building color palette (warm diorama towns)
-  const bldgColors = [
-    '#f5ebe0',
-    '#e3d5ca',
-    '#d5a087',
-    '#ebd8c8',
-    '#f8f4ec',
-    '#8d6e63',
-    '#64748b'
+  const bldgPalette = [
+    '#faf8f5', // Chalk white
+    '#f0eae1', // Warm cream
+    '#dfd5c6', // Sand stone
+    '#c05621', // Terracotta brick
+    '#475569', // Modern slate
+    '#ffffff', // Pure white
+    '#e2e8f0'  // Soft grey
   ];
+
+  // Perimeter lot offsets for a 9.6x9.6 block (leaving inner courtyard "pulmón de manzana")
+  const perimeterLots = [
+    { dx: -3.2, dz: -3.2, w: 2.7, d: 2.7 },
+    { dx: 0.0,  dz: -3.4, w: 2.9, d: 2.4 },
+    { dx: 3.2,  dz: -3.2, w: 2.7, d: 2.7 },
+    { dx: -3.4, dz: 0.0,  w: 2.4, d: 2.9 },
+    { dx: 3.4,  dz: 0.0,  w: 2.4, d: 2.9 },
+    { dx: -3.2, dz: 3.2,  w: 2.7, d: 2.7 },
+    { dx: 0.0,  dz: 3.4,  w: 2.9, d: 2.4 },
+    { dx: 3.2,  dz: 3.2,  w: 2.7, d: 2.7 },
+  ];
+
+  let sidewalkCount = 0;
+  let bldgCount = 0;
 
   for (let ix = 0; ix < cols; ix++) {
     for (let iz = 0; iz < rows; iz++) {
-      const x = xMin + ix * step;
-      const z = zMin + iz * step;
+      const bx = xMin + ix * blockStep;
+      const bz = zMin + iz * blockStep;
 
       // Inverse projection to GPS coordinates
-      const lat = PARANA_ORIGIN.lat - z / (111139.0 / 10.0);
-      const lng = PARANA_ORIGIN.lng + x / (111139.0 * Math.cos(-31.73305 * Math.PI / 180.0) / 10.0);
+      const lat = PARANA_ORIGIN.lat - bz / (111139.0 / 10.0);
+      const lng = PARANA_ORIGIN.lng + bx / (111139.0 * Math.cos(-31.73305 * Math.PI / 180.0) / 10.0);
 
-      // Strict Coastal Clipping Rule: Never render outside dry land
-      if (!isLand(lat, lng)) {
-        continue; // Strictly river water plane Y = 0
-      }
-
+      // Only on dry land and on high city plateau
+      if (!isLand(lat, lng)) continue;
       const elev = getElevation(lat, lng);
-      if (elev <= 0) continue;
+      if (elev < 6.5) continue; // Keep low costanera clean
 
-      // Check if inside any park polygon
-      let isPark = false;
+      // Check if block center is inside any park
+      let inPark = false;
       for (const park of geoData.parks) {
         if (isPointInPolygon([lat, lng], park.polygon)) {
-          isPark = true;
+          inPark = true;
           break;
         }
       }
+      if (inPark) continue;
 
-      // Check if coordinate is on an island
-      let isIsland = false;
-      for (const island of geoData.islands) {
-        if (isPointInPolygon([lat, lng], island.polygon)) {
-          isIsland = true;
-          break;
-        }
-      }
+      // Distance to road network
+      const distToRoadCenter = roadIndex.getMinDistanceToRoadOrRail(bx, bz);
+      if (distToRoadCenter < 1.8) continue; // Leave major intersections clear
 
-      // Determine voxel height and position
-      const blockHeight = elev;
-      dummy.position.set(x, blockHeight / 2, z);
-      dummy.scale.set(1, blockHeight, 1);
+      // Add sidewalk base
+      dummy.position.set(bx, elev + 0.11, bz);
+      dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
+      sidewalkMesh.setMatrixAt(sidewalkCount, dummy.matrix);
+      sidewalkCount++;
 
-      instancedMesh.setMatrixAt(terrainCount, dummy.matrix);
+      // Zone determination (microcentro vs intermediate vs residential)
+      const distFromCenter = Math.hypot(bx, bz);
+      const isMicrocentro = distFromCenter < 75.0;
+      const isIntermediate = distFromCenter < 135.0;
 
-      // Determine voxel color based on topography & land use (Warm natural diorama palette)
-      if (isIsland) {
-        color.set('#a3b18a'); // Sand/vegetation island
-      } else if (isPark) {
-        color.set(elev > 5.0 ? '#5a9944' : '#65a34e'); // Warm natural greens on barrancas
-      } else if (elev <= 1.4) {
-        color.set('#d5bdaf'); // Costanera low stone / sand
-      } else if (elev < 8.0) {
-        color.set(elev > 4.5 ? '#b58d67' : '#9c7350'); // Barranca cliff transition clay/earth
-      } else {
-        color.set('#d6d3d1'); // Urban street asphalt / sidewalk base
-      }
+      // Spawn perimeter buildings for this block
+      for (const lot of perimeterLots) {
+        const px = bx + lot.dx;
+        const pz = bz + lot.dz;
 
-      instancedMesh.setColorAt(terrainCount, color);
-      terrainCount++;
+        // Lot GPS
+        const lotLat = PARANA_ORIGIN.lat - pz / (111139.0 / 10.0);
+        const lotLng = PARANA_ORIGIN.lng + px / (111139.0 * Math.cos(-31.73305 * Math.PI / 180.0) / 10.0);
 
-      // ==============================================================
-      // Procedural Urban Filler Buildings (Strict Point-Segment Spatial Clearance)
-      // ==============================================================
-      if (elev >= 7.5 && !isPark && !isIsland) {
-        // 1. Check distance to ANY road or rail segment
-        const distToRoad = roadIndex.getMinDistanceToRoadOrRail(x, z);
-        const bldgRadius = (step * 0.72) / 2; // ~2.16 units
-        const roadClearanceRequired = bldgRadius + 0.8;
+        // Strict road clearance: building must never clip street
+        if (roadIndex.getMinDistanceToRoadOrRail(px, pz) < 1.35) continue;
 
-        if (distToRoad > roadClearanceRequired) {
-          // 2. Check distance to ANY landmark monument
-          const isNearLandmark = exclusions.some(l => {
-            const dx = x - l.x;
-            const dz = z - l.z;
-            return dx * dx + dz * dz < (l.r + 2.0) * (l.r + 2.0);
-          });
+        // Strict landmark clearance
+        const isNearLandmark = exclusions.some(l => {
+          const dx = px - l.x;
+          const dz = pz - l.z;
+          return dx * dx + dz * dz < (l.r + 2.2) * (l.r + 2.2);
+        });
+        if (isNearLandmark) continue;
 
-          if (!isNearLandmark) {
-            // Deterministic hash based on coordinates
-            const hash = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
-            const rand = hash - Math.floor(hash);
-
-            if (rand > 0.35) {
-              const bldgHeight = 2.5 + rand * 5.0; // 2.5 to 7.5 units tall
-              dummy.position.set(x, elev + bldgHeight / 2, z);
-              dummy.scale.set(1, bldgHeight, 1);
-              dummy.updateMatrix();
-
-              bldgMesh.setMatrixAt(bldgCount, dummy.matrix);
-
-              const colorIdx = Math.floor(rand * bldgColors.length);
-              color.set(bldgColors[colorIdx]);
-              bldgMesh.setColorAt(bldgCount, color);
-              bldgCount++;
-            }
+        // Lot inside park check
+        let lotInPark = false;
+        for (const park of geoData.parks) {
+          if (isPointInPolygon([lotLat, lotLng], park.polygon)) {
+            lotInPark = true;
+            break;
           }
         }
+        if (lotInPark) continue;
+
+        // Deterministic hash for heights and styles
+        const hash = Math.sin(px * 12.9898 + pz * 78.233) * 43758.5453;
+        const rand = hash - Math.floor(hash);
+
+        // Height based on urban zone
+        let bldgH: number;
+        if (isMicrocentro) {
+          bldgH = 7.0 + rand * 13.0; // 7 to 20 floors
+        } else if (isIntermediate) {
+          bldgH = 3.5 + rand * 5.0;  // 3.5 to 8.5 floors
+        } else {
+          bldgH = 1.8 + rand * 2.2;  // 1 to 3 floors
+        }
+
+        const actualW = lot.w * (0.85 + rand * 0.25);
+        const actualD = lot.d * (0.85 + rand * 0.25);
+
+        dummy.position.set(px, elev + 0.22 + bldgH / 2, pz);
+        dummy.scale.set(actualW, bldgH, actualD);
+        dummy.updateMatrix();
+
+        bldgMesh.setMatrixAt(bldgCount, dummy.matrix);
+
+        const colorIdx = Math.floor(rand * bldgPalette.length);
+        color.set(bldgPalette[colorIdx]);
+        bldgMesh.setColorAt(bldgCount, color);
+        bldgCount++;
       }
     }
   }
 
-  instancedMesh.count = terrainCount;
-  instancedMesh.instanceMatrix.needsUpdate = true;
-  if (instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
-  scene.add(instancedMesh);
+  if (sidewalkCount > 0) {
+    sidewalkMesh.count = sidewalkCount;
+    sidewalkMesh.instanceMatrix.needsUpdate = true;
+    scene.add(sidewalkMesh);
+  }
 
   if (bldgCount > 0) {
     bldgMesh.count = bldgCount;
@@ -1587,40 +1777,35 @@ function buildVoxelTerrain(
 }
 
 /**
- * 2. Build Real Roads & Avenues from OpenStreetMap (NO Orthogonal False Grid)
- * - Avenues: width = 3.2 units, dark asphalt with central median
- * - Av. Francisco Ramírez: width = 7.5 units, vertebral spine with boulevard and farolas
- * - Common streets: width = 1.8 units, asphalt grey #3f3f46
+ * 3. Build Real Roads & Avenues from OpenStreetMap
+ * - Crisp graphite asphalt (#334155).
+ * - Av. Francisco Ramírez: width = 7.5 units, vertebral spine with boulevard and farolas.
+ * - Avenues: width = 3.4 units with median.
+ * - Streets: width = 2.0 units with dashed yellow centerline (#fbbf24).
  */
 function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
-  const avenueMat = new THREE.MeshStandardMaterial({
-    color: '#262626', // Deep charcoal asphalt
-    roughness: 0.9,
-    metalness: 0.05
-  });
-
-  const streetMat = new THREE.MeshStandardMaterial({
-    color: '#3f3f46', // Neutral dark grey asphalt for common streets
+  const roadMat = new THREE.MeshStandardMaterial({
+    color: '#334155', // Crisp dark graphite asphalt
     roughness: 0.88,
     metalness: 0.05
   });
 
   const medianMat = new THREE.MeshStandardMaterial({
-    color: '#15803d', // Green median grass
+    color: '#2f855a', // Rich green median
     roughness: 0.8
   });
 
   const medianCurbMat = new THREE.MeshStandardMaterial({
-    color: '#a8a29e', // Concrete curb
-    roughness: 0.9
+    color: '#94a3b8', // Concrete curb
+    roughness: 0.85
   });
 
   const lineMat = new THREE.MeshBasicMaterial({
-    color: '#fef08a' // Yellow lane marking
+    color: '#fbbf24' // Yellow lane marking
   });
 
   const lampPostMat = new THREE.MeshStandardMaterial({
-    color: '#44403c',
+    color: '#334155',
     roughness: 0.7,
     metalness: 0.4
   });
@@ -1640,14 +1825,12 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
 
     const isRamirez = road.name.toLowerCase().includes('ramírez') || road.name.toLowerCase().includes('ramirez');
     const isAvenue = road.type === 'avenue' || isRamirez;
-    const roadWidth = isRamirez ? 7.5 : (isAvenue ? 3.2 : 1.8);
-    const roadMat = isAvenue ? avenueMat : streetMat;
+    const roadWidth = isRamirez ? 7.5 : (isAvenue ? 3.4 : 2.0);
 
     for (let i = 0; i < road.coordinates.length - 1; i++) {
       const [lat1, lng1] = road.coordinates[i];
       const [lat2, lng2] = road.coordinates[i + 1];
 
-      // Strict check: if both points are outside dry land, skip
       if (!isLand(lat1, lng1) && !isLand(lat2, lng2)) continue;
 
       const p1 = projectTo3D(lat1, lng1);
@@ -1655,8 +1838,8 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
       const elev1 = getElevation(lat1, lng1);
       const elev2 = getElevation(lat2, lng2);
 
-      const v1 = new THREE.Vector3(p1.x, elev1 + 0.08, p1.z);
-      const v2 = new THREE.Vector3(p2.x, elev2 + 0.08, p2.z);
+      const v1 = new THREE.Vector3(p1.x, elev1 + 0.12, p1.z);
+      const v2 = new THREE.Vector3(p2.x, elev2 + 0.12, p2.z);
 
       const distance = v1.distanceTo(v2);
       if (distance < 0.4) continue;
@@ -1665,7 +1848,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
       const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
       const perp = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
 
-      // Continuous road ribbon segment
+      // Continuous road ribbon
       const roadGeom = new THREE.BoxGeometry(roadWidth, 0.14, distance);
       const roadMesh = new THREE.Mesh(roadGeom, roadMat);
       roadMesh.position.copy(mid);
@@ -1674,7 +1857,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
       scene.add(roadMesh);
 
       if (isRamirez) {
-        // Cantero Central (Raised Median Strip) for Av. Ramírez
+        // Cantero Central for Av. Ramírez
         const medianCurbGeom = new THREE.BoxGeometry(1.2, 0.22, distance);
         const medianCurb = new THREE.Mesh(medianCurbGeom, medianCurbMat);
         medianCurb.position.copy(mid);
@@ -1689,7 +1872,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
         medianGrass.lookAt(v2);
         scene.add(medianGrass);
 
-        // Double yellow lane markings on both sides
+        // Double yellow lane markings
         [-1.0, 1.0].forEach(offsetDist => {
           const numDashes = Math.max(1, Math.floor(distance / 5));
           for (let d = 0; d < numDashes; d++) {
@@ -1705,7 +1888,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
           }
         });
 
-        // Farolas (Voxel Street Lamps) along Ramirez every ~18 units
+        // Farolas along Ramirez every ~18 units
         const lampInterval = 18;
         const numLamps = Math.floor(distance / lampInterval);
         for (let l = 0; l < numLamps; l++) {
@@ -1731,7 +1914,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
           });
         }
       } else if (isAvenue) {
-        // Central median boulevard for normal avenues
+        // Median for normal avenues
         const medianGrassGeom = new THREE.BoxGeometry(0.6, 0.20, distance);
         const medianGrass = new THREE.Mesh(medianGrassGeom, medianMat);
         medianGrass.position.copy(mid);
@@ -1739,7 +1922,7 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
         medianGrass.lookAt(v2);
         scene.add(medianGrass);
       } else {
-        // Dashed yellow centerline for normal streets
+        // Dashed yellow centerline for streets
         if (distance > 6) {
           const numDashes = Math.max(1, Math.floor(distance / 6));
           for (let d = 0; d < numDashes; d++) {
@@ -1760,13 +1943,13 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
 }
 
 /**
- * 3. Build General Urquiza Railway Line (Ballast, Wooden Ties, Steel Rails)
+ * 4. Build General Urquiza Railway Line (Ballast, Wooden Ties, Steel Rails)
  */
 function buildRailways(scene: THREE.Scene, geoData: GeoFeatureData) {
   if (!geoData.railways || geoData.railways.length === 0) return;
 
   const ballastMat = new THREE.MeshStandardMaterial({
-    color: '#334155',
+    color: '#1e293b', // Dark ballast
     roughness: 0.95,
     metalness: 0.1
   });
@@ -1847,15 +2030,22 @@ function buildRailways(scene: THREE.Scene, geoData: GeoFeatureData) {
 }
 
 /**
- * 3. Build Voxel Flora (Lapachos, Jacarandás, Sauces y Ceibos)
+ * 5. Build Stylized Proportional 3D Trees (No fluorescent blobs)
+ * - Proportional trunks in warm bark brown (#5c4033)
+ * - Harmonious foliage palette:
+ *   - Lush forest green (#2f855a)
+ *   - Fresh lime green (#68d391)
+ *   - Lapacho rosado (#d53f8c)
+ *   - Jacarandá violeta (#805ad5)
+ * - Planted in Parque Urquiza, Plazas (1° de Mayo, Alvear), Costanera, and Av. Ramírez median.
  */
 function buildFlora(scene: THREE.Scene, geoData: GeoFeatureData) {
-  const maxTrees = 1500;
-  const trunkGeom = new THREE.BoxGeometry(0.5, 1.8, 0.5);
-  const foliageGeom = new THREE.BoxGeometry(2.0, 2.0, 2.0);
+  const maxTrees = 1600;
+  const trunkGeom = new THREE.BoxGeometry(0.28, 1.4, 0.28);
+  const foliageGeom = new THREE.BoxGeometry(1.6, 1.6, 1.6);
 
-  const trunkMat = new THREE.MeshStandardMaterial({ color: '#543d2b', roughness: 0.9 });
-  const foliageMat = new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0.05 });
+  const trunkMat = new THREE.MeshStandardMaterial({ color: '#5c4033', roughness: 0.9 });
+  const foliageMat = new THREE.MeshStandardMaterial({ roughness: 0.72, metalness: 0.04 });
 
   const trunkMesh = new THREE.InstancedMesh(trunkGeom, trunkMat, maxTrees);
   const foliageMesh = new THREE.InstancedMesh(foliageGeom, foliageMat, maxTrees);
@@ -1866,59 +2056,97 @@ function buildFlora(scene: THREE.Scene, geoData: GeoFeatureData) {
   const color = new THREE.Color();
   let treeCount = 0;
 
-  // Tree foliage color palette
+  // Harmonious diorama flora palette
   const floraColors = [
-    '#ec4899', // Lapacho rosado
-    '#f472b6', // Lapacho rosa claro
-    '#a855f7', // Jacarandá violeta
-    '#c084fc', // Jacarandá lila
-    '#84cc16', // Sauce costeño
-    '#ef4444'  // Flor del Ceibo
+    '#2f855a', // Forest green
+    '#38a169', // Medium green
+    '#68d391', // Lime green
+    '#d53f8c', // Lapacho rosado suave
+    '#805ad5', // Jacarandá violeta suave
   ];
 
-  // Distribute trees in parks, along costanera and boulevards
-  geoData.parks.forEach(park => {
-    const isUrquiza = park.name.toLowerCase().includes('urquiza');
-    const parkTreeTarget = isUrquiza ? 450 : 150;
+  // Distribute trees in parks and plazas
+  if (geoData.parks) {
+    geoData.parks.forEach(park => {
+      const isUrquiza = park.name.toLowerCase().includes('urquiza');
+      const isPlaza = park.name.toLowerCase().includes('plaza');
+      const parkTreeTarget = isUrquiza ? 480 : (isPlaza ? 80 : 150);
 
-    // Approximate bounding box of park polygon
-    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-    park.polygon.forEach(([lat, lng]) => {
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
-      if (lng < minLng) minLng = lng;
-      if (lng > maxLng) maxLng = lng;
+      let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+      park.polygon.forEach(([lat, lng]) => {
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+      });
+
+      for (let i = 0; i < parkTreeTarget * 2 && treeCount < maxTrees; i++) {
+        const lat = minLat + Math.random() * (maxLat - minLat);
+        const lng = minLng + Math.random() * (maxLng - minLng);
+
+        if (isPointInPolygon([lat, lng], park.polygon)) {
+          const { x, z } = projectTo3D(lat, lng);
+          const elev = getElevation(lat, lng);
+
+          // Trunk
+          dummy.position.set(x, elev + 0.7, z);
+          dummy.scale.set(1, 1, 1);
+          dummy.updateMatrix();
+          trunkMesh.setMatrixAt(treeCount, dummy.matrix);
+
+          // Foliage
+          dummy.position.set(x, elev + 1.9, z);
+          dummy.scale.set(0.85 + Math.random() * 0.35, 0.85 + Math.random() * 0.35, 0.85 + Math.random() * 0.35);
+          dummy.updateMatrix();
+          foliageMesh.setMatrixAt(treeCount, dummy.matrix);
+
+          // Assign flora color (Plazas and Parque Urquiza feature lapachos and jacarandás)
+          const colorHex = floraColors[Math.floor(Math.random() * floraColors.length)];
+          color.set(colorHex);
+          foliageMesh.setColorAt(treeCount, color);
+
+          treeCount++;
+        }
+      }
     });
+  }
 
-    for (let i = 0; i < parkTreeTarget * 2 && treeCount < maxTrees; i++) {
-      const lat = minLat + Math.random() * (maxLat - minLat);
-      const lng = minLng + Math.random() * (maxLng - minLng);
+  // Also plant trees along Av. Ramírez boulevard median
+  const ramirezRoad = (geoData.roads || geoData.arteries).find(r => r.name.toLowerCase().includes('ramírez') || r.name.toLowerCase().includes('ramirez'));
+  if (ramirezRoad && ramirezRoad.coordinates) {
+    for (let i = 0; i < ramirezRoad.coordinates.length - 1; i++) {
+      const [lat1, lng1] = ramirezRoad.coordinates[i];
+      const [lat2, lng2] = ramirezRoad.coordinates[i + 1];
+      const p1 = projectTo3D(lat1, lng1);
+      const p2 = projectTo3D(lat2, lng2);
+      const dist = Math.hypot(p2.x - p1.x, p2.z - p1.z);
+      const numTrees = Math.floor(dist / 9.0);
 
-      if (isPointInPolygon([lat, lng], park.polygon)) {
+      for (let t = 0; t < numTrees && treeCount < maxTrees; t++) {
+        const frac = (t + 0.5) / Math.max(1, numTrees);
+        const lat = lat1 + (lat2 - lat1) * frac;
+        const lng = lng1 + (lng2 - lng1) * frac;
         const { x, z } = projectTo3D(lat, lng);
         const elev = getElevation(lat, lng);
 
-        // Trunk
-        dummy.position.set(x, elev + 0.9, z);
+        dummy.position.set(x, elev + 0.7, z);
         dummy.scale.set(1, 1, 1);
         dummy.updateMatrix();
         trunkMesh.setMatrixAt(treeCount, dummy.matrix);
 
-        // Foliage
-        dummy.position.set(x, elev + 2.4, z);
-        dummy.scale.set(0.9 + Math.random() * 0.4, 0.9 + Math.random() * 0.4, 0.9 + Math.random() * 0.4);
+        dummy.position.set(x, elev + 1.9, z);
+        dummy.scale.set(0.9, 0.9, 0.9);
         dummy.updateMatrix();
         foliageMesh.setMatrixAt(treeCount, dummy.matrix);
 
-        // Assign flora color
-        const colorHex = floraColors[Math.floor(Math.random() * floraColors.length)];
+        // Lapacho / Jacarandá along boulevard
+        const colorHex = (t % 2 === 0) ? '#d53f8c' : '#805ad5';
         color.set(colorHex);
         foliageMesh.setColorAt(treeCount, color);
-
         treeCount++;
       }
     }
-  });
+  }
 
   trunkMesh.count = treeCount;
   foliageMesh.count = treeCount;
