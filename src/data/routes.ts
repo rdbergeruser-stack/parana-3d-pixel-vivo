@@ -12,6 +12,7 @@ export interface TourRoute {
   color: string;
   duration: string;
   distance: string;
+  transport: string;
   places: string[]; // references PLACES id
 }
 
@@ -24,6 +25,7 @@ export const ROUTES: TourRoute[] = [
     color: '#3f8f4a',
     duration: '1h 45m',
     distance: '3.8 km',
+    transport: 'A pie o en bicicleta',
     places: [
       'letras_parana',
       'patito_siriri',
@@ -42,6 +44,7 @@ export const ROUTES: TourRoute[] = [
     color: '#913e23',
     duration: '1h 15m',
     distance: '2.1 km',
+    transport: 'A pie (paseo cívico peatonal)',
     places: [
       'plaza_mayo',
       'catedral_metropolitana',
@@ -60,6 +63,7 @@ export const ROUTES: TourRoute[] = [
     color: '#7a4fc0',
     duration: '1h 30m',
     distance: '2.9 km',
+    transport: 'A pie o en bicicleta',
     places: [
       'estacion_ferrocarril',
       'centro_cultural_juanele',
@@ -76,6 +80,7 @@ export const ROUTES: TourRoute[] = [
     color: '#c9821b',
     duration: '2h 10m',
     distance: '7.5 km',
+    transport: 'En auto o bicicleta',
     places: [
       'sala_mayo',
       'puerto_sanchez',
@@ -92,6 +97,7 @@ export const ROUTES: TourRoute[] = [
     color: '#2f6fb3',
     duration: '2h 00m',
     distance: '6.2 km',
+    transport: 'En auto o colectivo urbano',
     places: [
       'club_nautico',
       'parana_rowing',

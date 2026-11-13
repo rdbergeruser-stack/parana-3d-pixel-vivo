@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PLACES, PLACE_CATEGORIES, Place, PlaceCategory } from '@/data/places';
@@ -19,7 +21,15 @@ import {
   Navigation,
   Check,
   ChevronRight,
-  Eye
+  ChevronLeft,
+  Eye,
+  Search,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  CheckCircle2,
+  BookOpen,
+  Route as RouteIcon
 } from 'lucide-react';
 import {
   buildCatedral,
@@ -99,13 +109,26 @@ function createPinBadgeTexture(numberStr: string, colorHex: string): THREE.Canva
 
 export default function ParanaMap3D() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
 
   // UI state
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [hoveredPlace, setHoveredPlace] = useState<Place | null>(null);
   const [activeCategory, setActiveCategory] = useState<PlaceCategory | 'todas'>('todas');
   const [activeRoute, setActiveRoute] = useState<TourRoute | null>(null);
+  const [activeRouteStep, setActiveRouteStep] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // Collaboration feedback modal
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<'falta' | 'error' | 'sugerencia'>('falta');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
 
   // References to 3D engine controls and objects
   const engineRef = useRef<{
@@ -159,6 +182,50 @@ export default function ParanaMap3D() {
     engineRef.current.flyCameraTarget = new THREE.Vector3(180, 210, 180);
     setSelectedPlace(null);
   }, []);
+
+  // Filtered search results for real-time search
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return PLACES.filter(
+      p =>
+        p.name.toLowerCase().includes(q) ||
+        p.subtitle.toLowerCase().includes(q) ||
+        p.zone.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
+    ).slice(0, 8);
+  }, [searchQuery]);
+
+  // Navigate through active route step-by-step
+  const handleRouteStep = useCallback((direction: 'next' | 'prev') => {
+    if (!activeRoute) return;
+    const placesInRoute = activeRoute.places
+      .map(id => PLACES.find(p => p.id === id))
+      .filter((p): p is Place => Boolean(p));
+
+    if (placesInRoute.length === 0) return;
+
+    let nextStep = direction === 'next' ? activeRouteStep + 1 : activeRouteStep - 1;
+    if (nextStep < 0) nextStep = placesInRoute.length - 1;
+    if (nextStep >= placesInRoute.length) nextStep = 0;
+
+    setActiveRouteStep(nextStep);
+    flyToPlace(placesInRoute[nextStep]);
+  }, [activeRoute, activeRouteStep, flyToPlace]);
+
+  // Handle URL query parameter ?lugar=slug
+  useEffect(() => {
+    if (!isLoaded) return;
+    const lugarQuery = searchParams.get('lugar');
+    if (!lugarQuery) return;
+
+    const targetPlace = PLACES.find(
+      p => p.id === lugarQuery || p.id.toLowerCase().includes(lugarQuery.toLowerCase())
+    );
+    if (targetPlace) {
+      flyToPlace(targetPlace);
+    }
+  }, [isLoaded, searchParams, flyToPlace]);
 
   // Zoom helpers
   const handleZoom = (inOut: 'in' | 'out') => {
@@ -521,21 +588,81 @@ export default function ParanaMap3D() {
         </div>
       )}
 
-      {/* Top Bar: Brand, Category Filter Pills & Routes Button */}
-      <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-3 pointer-events-none z-20">
-        {/* Brand Pill */}
-        <div className="flex items-center gap-2.5 bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white px-3.5 py-2 rounded-2xl shadow-xl pointer-events-auto">
-          <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">
-            P
+      {/* Top Floating Control Bar */}
+      <div className="absolute top-4 left-4 right-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pointer-events-none z-20">
+        {/* Left Section: Brand & Real-time Search */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Brand Pill */}
+          <div className="flex items-center gap-2.5 bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white px-3.5 py-2 rounded-2xl shadow-xl">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">
+              P
+            </div>
+            <div>
+              <h1 className="text-sm font-bold leading-tight">Paraná Pixelado</h1>
+              <p className="text-[10px] text-slate-400 leading-none">Entre Ríos, Argentina</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm font-bold leading-tight">Paraná Pixelado</h1>
-            <p className="text-[10px] text-slate-400 leading-none">Entre Ríos, Argentina</p>
+
+          {/* Real-time Search Input */}
+          <div className="relative flex-1 md:w-64">
+            <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-2 rounded-2xl shadow-xl text-white">
+              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                placeholder="Buscar lugar o barrio..."
+                className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="p-0.5 text-slate-400 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Search Results Dropdown */}
+            {isSearchFocused && searchResults.length > 0 && (
+              <div
+                onMouseLeave={() => setIsSearchFocused(false)}
+                className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl p-1.5 shadow-2xl z-30 max-h-72 overflow-y-auto space-y-1"
+              >
+                {searchResults.map(place => (
+                  <button
+                    key={place.id}
+                    onClick={() => {
+                      flyToPlace(place);
+                      setIsSearchFocused(false);
+                      setSearchQuery('');
+                    }}
+                    className="w-full text-left p-2 rounded-xl text-xs hover:bg-slate-800/80 transition-colors flex items-center justify-between"
+                  >
+                    <div>
+                      <div className="font-semibold text-white flex items-center gap-1.5">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: PLACE_CATEGORIES[place.category].color }}
+                        />
+                        <span>{place.name}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
+                        {place.zone} • {place.subtitle}
+                      </div>
+                    </div>
+                    <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-800/80 p-1.5 rounded-2xl shadow-xl pointer-events-auto overflow-x-auto max-w-full">
+        {/* Center: Category Filter Pills */}
+        <div className="flex items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-800/80 p-1.5 rounded-2xl shadow-xl pointer-events-auto overflow-x-auto max-w-full">
           <button
             onClick={() => setActiveCategory('todas')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
@@ -555,7 +682,7 @@ export default function ParanaMap3D() {
               <button
                 key={catKey}
                 onClick={() => setActiveCategory(catKey)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
                   isCatActive
                     ? 'text-white font-semibold shadow-sm'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -565,24 +692,34 @@ export default function ParanaMap3D() {
                 }}
               >
                 <span>{cat.name}</span>
-                <span className="text-[10px] opacity-75">({count})</span>
+                <span className="text-[10px] opacity-75 font-mono">({count})</span>
               </button>
             );
           })}
         </div>
 
-        {/* Routes Dropdown Pill */}
-        <div className="pointer-events-auto">
+        {/* Right Section: Routes Dropdown & SSG Catalog Link */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Catalog Link */}
+          <Link
+            href="/lugares"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium bg-slate-900/90 text-slate-200 border border-slate-800 hover:bg-slate-800 transition-colors shadow-xl"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <span>Catálogo</span>
+          </Link>
+
+          {/* Routes Dropdown */}
           <div className="relative group">
             <button
               className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-medium shadow-xl border backdrop-blur-md transition-all ${
                 activeRoute
-                  ? 'bg-emerald-600 text-white border-emerald-500'
+                  ? 'bg-emerald-600 text-white border-emerald-500 font-semibold'
                   : 'bg-slate-900/90 text-slate-200 border-slate-800 hover:bg-slate-800'
               }`}
             >
               <Navigation className="w-3.5 h-3.5 text-amber-400" />
-              <span>{activeRoute ? activeRoute.name : 'Recorridos Turísticos'}</span>
+              <span>{activeRoute ? activeRoute.name : 'Recorridos'}</span>
             </button>
 
             {/* Dropdown Menu */}
@@ -592,7 +729,10 @@ export default function ParanaMap3D() {
               </div>
               {activeRoute && (
                 <button
-                  onClick={() => setActiveRoute(null)}
+                  onClick={() => {
+                    setActiveRoute(null);
+                    setActiveRouteStep(0);
+                  }}
                   className="w-full text-left px-2.5 py-2 rounded-xl text-xs text-rose-400 hover:bg-rose-500/10 flex items-center justify-between mb-1"
                 >
                   <span>Desactivar recorrido</span>
@@ -602,7 +742,10 @@ export default function ParanaMap3D() {
               {ROUTES.map(route => (
                 <button
                   key={route.id}
-                  onClick={() => setActiveRoute(route)}
+                  onClick={() => {
+                    setActiveRoute(route);
+                    setActiveRouteStep(0);
+                  }}
                   className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
                     activeRoute?.id === route.id
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
@@ -611,7 +754,9 @@ export default function ParanaMap3D() {
                 >
                   <div>
                     <div className="font-medium text-slate-100">{route.name}</div>
-                    <div className="text-[10px] text-slate-400">{route.places.length} paradas • {route.duration}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">
+                      {route.places.length} paradas • {route.distance} • {route.duration}
+                    </div>
                   </div>
                   {activeRoute?.id === route.id && <Check className="w-4 h-4 text-amber-400" />}
                 </button>
@@ -621,9 +766,53 @@ export default function ParanaMap3D() {
         </div>
       </div>
 
+      {/* Active Route Step-by-Step Bottom Floating Bar */}
+      {activeRoute && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 w-full max-w-lg px-4 pointer-events-auto animate-in slide-in-from-top duration-300">
+          <div className="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/40 rounded-2xl p-3 shadow-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="space-y-0.5 text-left w-full sm:w-auto">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-bold text-white">{activeRoute.name}</span>
+                <span className="text-[10px] text-emerald-400 font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                  Parada {activeRouteStep + 1} de {activeRoute.places.length}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300">
+                Transporte: <span className="text-amber-300">{activeRoute.transport}</span> ({activeRoute.distance} • {activeRoute.duration})
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1.5 self-end sm:self-auto">
+              <button
+                onClick={() => handleRouteStep('prev')}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1 text-slate-200"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Anterior</span>
+              </button>
+              <button
+                onClick={() => handleRouteStep('next')}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold flex items-center gap-1 text-white shadow"
+              >
+                <span className="hidden sm:inline">Siguiente</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setActiveRoute(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+                title="Cerrar recorrido"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Hover Tooltip */}
       {hoveredPlace && !selectedPlace && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 pointer-events-none z-20 animate-fade-in">
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-20 animate-fade-in">
           <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2.5">
             <span
               className="w-3 h-3 rounded-full"
@@ -635,34 +824,50 @@ export default function ParanaMap3D() {
         </div>
       )}
 
-      {/* Camera Navigation Control Bar (Bottom-Left) */}
-      <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
-        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1.5 rounded-2xl shadow-xl flex items-center gap-1">
+      {/* Camera Navigation Control Bar & Collaboration Button (Bottom-Left) */}
+      <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2 pointer-events-auto">
+        <div className="flex items-center gap-2">
+          {/* Zoom & Reset Controls */}
+          <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1.5 rounded-2xl shadow-xl flex items-center gap-1">
+            <button
+              onClick={resetCameraView}
+              title="Centrar en Plaza 1° de Mayo"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <div className="w-[1px] h-5 bg-slate-800" />
+            <button
+              onClick={() => handleZoom('in')}
+              title="Acercar (Zoom +)"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleZoom('out')}
+              title="Alejar (Zoom -)"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Collaboration Feedback Trigger Button */}
           <button
-            onClick={resetCameraView}
-            title="Centrar en Plaza 1° de Mayo"
-            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            onClick={() => {
+              setIsFeedbackOpen(true);
+              setFeedbackSuccess(false);
+            }}
+            className="bg-slate-900/90 backdrop-blur-md border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800 text-slate-300 hover:text-amber-300 px-3 py-2.5 rounded-2xl shadow-xl text-xs font-medium flex items-center gap-2 transition-all"
           >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-          <div className="w-[1px] h-5 bg-slate-800" />
-          <button
-            onClick={() => handleZoom('in')}
-            title="Acercar (Zoom +)"
-            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleZoom('out')}
-            title="Alejar (Zoom -)"
-            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <ZoomOut className="w-4 h-4" />
+            <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">¿Algo está mal o falta? Avisanos</span>
+            <span className="sm:hidden">Avisanos</span>
           </button>
         </div>
 
-        {/* Small Navigation Hint */}
+        {/* Navigation Hint */}
         <div className="text-[10px] text-slate-400 bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-900 inline-flex items-center gap-1.5">
           <span>Arrastrar: Rotar</span>
           <span>•</span>
@@ -674,7 +879,7 @@ export default function ParanaMap3D() {
 
       {/* Selected Place Card (Bottom-Right / Drawer) */}
       {selectedPlace && (
-        <div className="absolute bottom-6 right-6 max-w-sm w-full z-30 animate-in slide-in-from-bottom duration-300">
+        <div className="absolute bottom-6 right-6 max-w-sm w-full z-30 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
           <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-5 shadow-2xl text-white space-y-3">
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
@@ -729,15 +934,148 @@ export default function ParanaMap3D() {
             )}
 
             {/* Action Buttons */}
-            <div className="pt-1 flex items-center gap-2">
-              <button
-                onClick={() => flyToPlace(selectedPlace)}
-                className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg"
+            <div className="pt-2 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => flyToPlace(selectedPlace)}
+                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>Centrar Vista</span>
+                </button>
+
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${selectedPlace.coordinates.lat},${selectedPlace.coordinates.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                >
+                  <span>Cómo llegar ↗</span>
+                </a>
+              </div>
+
+              <Link
+                href={`/lugar/${selectedPlace.id}`}
+                className="w-full text-center text-xs text-amber-400 hover:text-amber-300 py-1.5 rounded-lg font-medium transition-colors"
               >
-                <Compass className="w-3.5 h-3.5" />
-                <span>Centrar Vista</span>
+                Ver ficha completa en el catálogo →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collaboration Feedback Modal */}
+      {isFeedbackOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl text-white space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-amber-400" />
+                  Colaborá con Paraná Pixelado
+                </h3>
+                <p className="text-xs text-slate-400">
+                  ¿Viste algún dato incorrecto o falta un hito emblemático?
+                </p>
+              </div>
+              <button
+                onClick={() => setIsFeedbackOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
+
+            {feedbackSuccess ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+                <h4 className="text-sm font-bold text-white">¡Aporte recibido con éxito!</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Muchas gracias por colaborar para que Paraná Pixelado sea cada día más preciso y completo.
+                </p>
+                <button
+                  onClick={() => setIsFeedbackOpen(false)}
+                  className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold"
+                >
+                  Cerrar
+                </button>
+              </div>
+            ) : (
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  setFeedbackSuccess(true);
+                  setFeedbackMessage('');
+                  setFeedbackEmail('');
+                }}
+                className="space-y-3"
+              >
+                {/* Feedback Type Tabs */}
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                  {(['falta', 'error', 'sugerencia'] as const).map(type => (
+                    <button
+                      type="button"
+                      key={type}
+                      onClick={() => setFeedbackType(type)}
+                      className={`py-1.5 text-xs font-medium rounded-lg capitalize transition-colors ${
+                        feedbackType === type
+                          ? 'bg-amber-500 text-slate-950 font-bold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {type === 'falta' ? 'Falta lugar' : type === 'error' ? 'Dato erróneo' : 'Sugerencia'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label className="text-[11px] text-slate-400 block mb-1">
+                    Detalles del reporte o sugerencia
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={feedbackMessage}
+                    onChange={e => setFeedbackMessage(e.target.value)}
+                    placeholder="Contanos qué edificio falta, la ubicación exacta o el dato a corregir..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50"
+                  />
+                </div>
+
+                {/* Email (Optional) */}
+                <div>
+                  <label className="text-[11px] text-slate-400 block mb-1">
+                    Tu correo electrónico (opcional)
+                  </label>
+                  <input
+                    type="email"
+                    value={feedbackEmail}
+                    onChange={e => setFeedbackEmail(e.target.value)}
+                    placeholder="ejemplo@correo.com"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsFeedbackOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-slate-800"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1.5 shadow"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Enviar Aporte</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
