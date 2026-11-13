@@ -19,13 +19,15 @@ export interface LatLng {
 
 // Paraná geographic anchor point (Plaza 1° de Mayo)
 export const PARANA_ORIGIN: LatLng = {
-  lat: -31.7328,
-  lng: -60.5305
+  lat: -31.73305,
+  lng: -60.52972
 };
 
 // Scale conversions (units per degree)
-const LAT_SCALE = 11088.0; // 1° lat ≈ 110.88 km -> 11,088 units (0.1 units/m)
-const LNG_SCALE = 9468.0;  // 1° lng at 31.73°S ≈ 94.68 km -> 9,468 units (0.1 units/m)
+// 1 unit ≈ 10 meters (1 block ≈ 100m = 10 units)
+const LAT_SCALE = 111139.0 / 10.0; // 11113.9 units per degree lat
+const CENTER_LAT_RAD = (-31.73305 * Math.PI) / 180.0;
+const LNG_SCALE = (111139.0 * Math.cos(CENTER_LAT_RAD)) / 10.0; // 9451.9 units per degree lng
 
 /**
  * Converts real-world GPS coordinates (lat, lng) to 3D world (x, z) coordinates.

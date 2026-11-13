@@ -70,7 +70,7 @@ export interface Place {
 
 export const PLACES: Place[] = [
   // ==========================================
-  // 1. HISTORIA Y PATRIMONIO (7 Lugares)
+  // 1. HISTORIA Y PATRIMONIO (11 Lugares)
   // ==========================================
   {
     id: 'monumento_urquiza',
@@ -78,7 +78,7 @@ export const PLACES: Place[] = [
     subtitle: 'El prócer de la Confederación a caballo',
     category: 'historia',
     zone: 'Parque Urquiza - Barranca Alta',
-    coordinates: { lat: -31.7236, lng: -60.5358 },
+    coordinates: { lat: -31.72045, lng: -60.52455 },
     year: '1920',
     major: true,
     description: 'Monumental conjunto escultórico de bronce y mármol de Carrara erigido sobre la cima de las barrancas del Parque Urquiza.',
@@ -90,7 +90,7 @@ export const PLACES: Place[] = [
     subtitle: '¿Quién sostiene a Paraná desde abajo?',
     category: 'historia',
     zone: 'Cimientos del Inframundo Paranaense',
-    coordinates: { lat: -31.7328, lng: -60.5305 },
+    coordinates: { lat: -31.73305, lng: -60.52972 },
     year: 'Eterno',
     major: true,
     description: '¡Has descubierto el secreto oculto de la maqueta! En las entrañas de la tierra entrerriana, un gigantesco Mate de porongo y plata con el Sol de Mayo sostiene el peso de la ciudad con pura energía litoraleña.',
@@ -102,7 +102,7 @@ export const PLACES: Place[] = [
     subtitle: 'El "Tigre de los Ríos" Legendario',
     category: 'rio-y-verde',
     zone: 'Canal del Islote Curupí',
-    coordinates: { lat: -31.7200, lng: -60.5480 },
+    coordinates: { lat: -31.72000, lng: -60.54800 },
     year: 'Mítico',
     major: true,
     description: 'Un dorado colosal de escamas doradas y aletas brillantes que nada en los remansos entre la Costanera y el Islote Curupí, custodiando las aguas paranaenses.',
@@ -113,11 +113,11 @@ export const PLACES: Place[] = [
     name: 'Catedral Metropolitana',
     subtitle: 'Nuestra Señora del Rosario',
     category: 'historia',
-    zone: 'Plaza 1° de Mayo',
-    coordinates: { lat: -31.7323, lng: -60.5298 },
+    zone: 'Su Santidad Francisco / Monte Caseros',
+    coordinates: { lat: -31.73275, lng: -60.52890 },
     year: '1883',
     major: true,
-    description: 'Imponente templo de estilo renacentista italiano frente a Plaza 1° de Mayo. Cuenta con dos campanarios gemelos de 42 metros de altura y un pórtico monumental con seis columnas corintias.',
+    description: 'Imponente templo de estilo renacentista italiano frente a Plaza 1° de Mayo sobre calle Su Santidad Francisco / Monte Caseros, al este de la plaza. Cuenta con dos campanarios gemelos de 42 metros de altura.',
     curiosity: 'Fue declarada Monumento Histórico Nacional en 1942 y custodia reliquias litúrgicas del período en que Paraná fue Capital de la Confederación Argentina.'
   },
   {
@@ -125,12 +125,23 @@ export const PLACES: Place[] = [
     name: 'Casa de Gobierno (Casa Gris)',
     subtitle: 'Sede del Poder Ejecutivo Provincial',
     category: 'historia',
-    zone: 'Plaza Alvear',
-    coordinates: { lat: -31.7289, lng: -60.5285 },
+    zone: 'Centro Cívico · Córdoba y Laprida',
+    coordinates: { lat: -31.72825, lng: -60.52915 },
     year: '1889',
     major: true,
     description: 'Monumento Histórico Nacional de estilo barroco francés y fachada en símil piedra París. Alberga el despacho del Gobernador provincial y los recintos legislativos.',
     curiosity: 'Su torre campanario de 35 metros alberga un reloj de cuatro cuadrantes visible desde toda el área cívica de la ciudad.'
+  },
+  {
+    id: 'palacio_tribunales',
+    name: 'Palacio de Justicia (Tribunales)',
+    subtitle: 'Poder Judicial de Entre Ríos',
+    category: 'historia',
+    zone: 'Laprida y Santa Fe',
+    coordinates: { lat: -31.72895, lng: -60.52835 },
+    year: '1969',
+    description: 'Imponente edificio cívico de corte monumentalista sede del Superior Tribunal de Justicia de Entre Ríos, ubicado a metros de la Casa Gris.',
+    curiosity: 'Ocupa la manzana cívica sobre calle Laprida completando el conjunto arquitectónico republicano de la provincia.'
   },
   {
     id: 'palacio_municipal',
@@ -138,9 +149,9 @@ export const PLACES: Place[] = [
     subtitle: 'Municipalidad de Paraná',
     category: 'historia',
     zone: 'Urquiza y Corrientes',
-    coordinates: { lat: -31.7319, lng: -60.5312 },
+    coordinates: { lat: -31.73355, lng: -60.52885 },
     year: '1890',
-    description: 'Edificio de líneas italianizantes proyectado por el arquitecto Santos Domínguez y Benguria. Destaca por su alta torre del reloj y su balcón sobre calle Urquiza.',
+    description: 'Edificio de líneas italianizantes en la esquina de Urquiza y Corrientes, al sureste de la plaza. Destaca por su alta torre del reloj de cuatro cuadrantes.',
     curiosity: 'El reloj de la torre fue importado directamente de Europa a finales del siglo XIX y sigue marcando las horas de la ciudad.'
   },
   {
@@ -148,11 +159,11 @@ export const PLACES: Place[] = [
     name: 'Colegio Nuestra Señora del Huerto',
     subtitle: 'Sede del Congreso de la Confederación',
     category: 'historia',
-    zone: 'Plaza 1° de Mayo',
-    coordinates: { lat: -31.7315, lng: -60.5300 },
+    zone: 'Frente sur Plaza 1° de Mayo · Urquiza',
+    coordinates: { lat: -31.73365, lng: -60.52975 },
     year: '1860',
     major: true,
-    description: 'Histórico solar educativo y religioso contiguo a la Catedral sobre Plaza 1° de Mayo. En este solar sesionó el Congreso Constituyente de la Confederación Argentina.',
+    description: 'Histórico solar educativo y religioso sobre la vereda sur de la Plaza 1° de Mayo, en calle Urquiza. En este solar sesionó el Congreso Constituyente de la Confederación Argentina.',
     curiosity: 'Sus claustros conservan el aula histórica donde los legisladores confederados debatieron el destino de la Nación.'
   },
   {
@@ -160,19 +171,19 @@ export const PLACES: Place[] = [
     name: 'Escuela Normal José María Torres',
     subtitle: 'Cuna del magisterio argentino',
     category: 'historia',
-    zone: 'Urquiza y Corrientes',
-    coordinates: { lat: -31.7335, lng: -60.5320 },
+    zone: 'Urquiza y Corrientes / San Juan',
+    coordinates: { lat: -31.73240, lng: -60.53055 },
     year: '1870',
-    description: 'Fundada por Domingo Faustino Sarmiento en 1870 como la primera escuela de formación docente del país. Ocupa una manzana céntrica señorial.',
+    description: 'Fundada por Domingo Faustino Sarmiento en 1870 como la primera escuela de formación docente del país. Ocupa una manzana céntrica señorial frente al flanco norte/oeste de la plaza.',
     curiosity: 'Aquí funcionó el primer jardín de infantes del país bajo la dirección de la pionera estadounidense Sara Eccleston.'
   },
   {
     id: 'tunel_subfluvial',
-    name: 'Túnel Subfluvial Hernandarias',
+    name: 'Complejo Túnel Subfluvial Hernandarias',
     subtitle: 'Boca de entrada Paraná - Santa Fe',
     category: 'historia',
     zone: 'Ruta Nacional 168',
-    coordinates: { lat: -31.7067, lng: -60.5050 },
+    coordinates: { lat: -31.71250, lng: -60.49550 },
     year: '1969',
     major: true,
     description: 'Obra cumbre de la ingeniería latinoamericana. Cruza por debajo del lecho del Río Paraná a lo largo de 2.397 metros conectando Entre Ríos con Santa Fe.',
@@ -184,7 +195,7 @@ export const PLACES: Place[] = [
     subtitle: 'Ferrocarril General Urquiza',
     category: 'historia',
     zone: 'Bulevar Racedo',
-    coordinates: { lat: -31.7456, lng: -60.5228 },
+    coordinates: { lat: -31.74560, lng: -60.52280 },
     year: '1887',
     major: true,
     description: 'Estación terminal ferroviaria de estilo inglés, con ladrillo a la vista, techos de chapa a dos aguas y marquesinas de hierro forjado.',
@@ -196,25 +207,25 @@ export const PLACES: Place[] = [
     subtitle: 'Cuna portuaria de Paraná',
     category: 'historia',
     zone: 'Oeste Ribereño',
-    coordinates: { lat: -31.7280, lng: -60.5620 },
+    coordinates: { lat: -31.72650, lng: -60.56550 },
     year: 'Origen Fluvial',
     description: 'El puerto natural originario de Paraná hacia el oeste. Barrio ribereño de pescadores artesanales, acantilados y vestigios del antiguo ferrocarril portuario.',
     curiosity: 'Durante el siglo XIX recibía los vapores de ultramar antes de que se construyera el Puerto Nuevo hacia el norte.'
   },
 
   // ==========================================
-  // 2. CULTURA Y ARTES (7 Lugares)
+  // 2. CULTURA Y ARTES (8 Lugares)
   // ==========================================
   {
     id: 'teatro_3_febrero',
     name: 'Teatro Municipal 3 de Febrero',
     subtitle: 'Templo de las artes escénicas',
     category: 'cultura',
-    zone: '25 de Mayo 60',
-    coordinates: { lat: -31.7342, lng: -60.5315 },
+    zone: '25 de Mayo 44',
+    coordinates: { lat: -31.73185, lng: -60.53185 },
     year: '1908',
     major: true,
-    description: 'Teatro lírico con sala a la italiana, palcos dorados, paraíso y acústica excepcional. Su nombre conmemora la Batalla de Caseros de 1852.',
+    description: 'Teatro lírico con sala a la italiana, palcos dorados, paraíso y acústica excepcional sobre calle 25 de Mayo 44, a dos cuadras de la plaza.',
     curiosity: 'Posee capacidad para 850 espectadores y una deslumbrante cúpula pintada al óleo por maestros italianos.'
   },
   {
@@ -223,22 +234,22 @@ export const PLACES: Place[] = [
     subtitle: 'El "Juanele" - Arte y ferrocarril',
     category: 'cultura',
     zone: 'Bulevar Racedo 250',
-    coordinates: { lat: -31.7445, lng: -60.5245 },
+    coordinates: { lat: -31.74185, lng: -60.52495 },
     year: 'Cultura',
     major: true,
-    description: 'Antiguos galpones de máquinas y talleres del ferrocarril reconvertidos en un vibrante multiespacio de artes plásticas, música, teatro y ferias.',
-    curiosity: 'Homenajea al excelso poeta entrerriano Juan Laurentino Ortiz y se encuentra a metros de la Estación Central sobre el Bv. Racedo.'
+    description: 'Antiguos galpones de máquinas y talleres del ferrocarril reconvertidos en un vibrante multiespacio de artes plásticas, música, teatro y ferias sobre Bv. Racedo entre Ramírez y Belgrano.',
+    curiosity: 'Homenajea al excelso poeta entrerriano Juan Laurentino Ortiz y se emplaza al lado norte de las vías, a metros de la Estación Central.'
   },
   {
     id: 'sala_mayo',
-    name: 'Sala Mayo',
+    name: 'Sala Mayo / Puerto Nuevo',
     subtitle: 'Nave de eventos del Puerto Nuevo',
     category: 'cultura',
-    zone: 'Costanera Este',
-    coordinates: { lat: -31.7161, lng: -60.5278 },
+    zone: 'Costanera Este · Puerto Nuevo',
+    coordinates: { lat: -31.71760, lng: -60.52950 },
     year: 'Patrimonio',
     major: true,
-    description: 'Antiguos galpones aduaneros portuarios de ladrillo reciclados frente al río. Espacio principal de ferias del libro, exposiciones y festivales.',
+    description: 'Antiguos galpones aduaneros portuarios de ladrillo reciclados frente a la dársena del Puerto Nuevo y el río. Espacio principal de ferias del libro y festivales.',
     curiosity: 'A sus pies se yergue la histórica Grúa Roja de hierro forjado que desembarcaba cargas del río en el siglo XX.'
   },
   {
@@ -246,8 +257,8 @@ export const PLACES: Place[] = [
     name: 'Centro Cultural La Vieja Usina',
     subtitle: 'Patrimonio industrial y usina de arte',
     category: 'cultura',
-    zone: 'Gregoria Matorras 861 (Costanera/Corrientes)',
-    coordinates: { lat: -31.7195, lng: -60.5315 },
+    zone: 'Gregoria Matorras 861',
+    coordinates: { lat: -31.72485, lng: -60.52565 },
     year: '1921',
     major: true,
     description: 'Antigua usina eléctrica de principios de siglo XX de arquitectura ladrillera fabril con chimenea, reciclada como centro cultural y sala de convenciones.',
@@ -259,7 +270,7 @@ export const PLACES: Place[] = [
     subtitle: 'Escenario natural en la barranca',
     category: 'cultura',
     zone: 'Parque Urquiza',
-    coordinates: { lat: -31.7230, lng: -60.5385 },
+    coordinates: { lat: -31.72250, lng: -60.53650 },
     year: '1985',
     description: 'Teatro al aire libre construido aprovechando la acústica de una quebrada profunda del Parque Urquiza, con gradas concéntricas de piedra.',
     curiosity: 'Es la sede principal de festivales de folclore litoraleño, ciclos de cine bajo las estrellas y recitales al atardecer.'
@@ -270,7 +281,7 @@ export const PLACES: Place[] = [
     subtitle: 'Dr. Pedro E. Martínez',
     category: 'cultura',
     zone: 'Buenos Aires 355',
-    coordinates: { lat: -31.7280, lng: -60.5292 },
+    coordinates: { lat: -31.72800, lng: -60.52920 },
     year: '1926',
     description: 'Principal pinacoteca de Entre Ríos, con una destacadísima colección de pintura argentina, grabado y esculturas contemporáneas.',
     curiosity: 'Funciona en una casona señorial de estilo ecléctico a escasos metros de la Casa de Gobierno.'
@@ -281,7 +292,7 @@ export const PLACES: Place[] = [
     subtitle: 'Memoria y tradición entrerriana',
     category: 'cultura',
     zone: 'Laprida y Buenos Aires',
-    coordinates: { lat: -31.7285, lng: -60.5270 },
+    coordinates: { lat: -31.72850, lng: -60.52700 },
     year: '1923',
     description: 'Guarda armas históricas de caudillos, platería criolla, documentos originales de la Confederación y carruajes de época.',
     curiosity: 'Lleva el nombre del escritor y folklorista que plasmó la épica criolla del gaucho montielero de Entre Ríos.'
@@ -292,7 +303,7 @@ export const PLACES: Place[] = [
     subtitle: 'Cultura ciudadana centenaria',
     category: 'cultura',
     zone: 'Buenos Aires 256',
-    coordinates: { lat: -31.7331, lng: -60.5318 },
+    coordinates: { lat: -31.73310, lng: -60.53180 },
     year: '1873',
     description: 'Institución civil fundada durante la presidencia de Sarmiento. Conserva miles de volúmenes históricos en una hermosa sala de lectura.',
     curiosity: 'Fue una de las primeras bibliotecas creadas al amparo de la Ley Nacional de Bibliotecas Populares.'
@@ -307,7 +318,7 @@ export const PLACES: Place[] = [
     subtitle: 'Mirador de las Barrancas del Patito Sirirí',
     category: 'rio-y-verde',
     zone: 'Costanera Alta · Parque Urquiza',
-    coordinates: { lat: -31.7204, lng: -60.5398 },
+    coordinates: { lat: -31.72140, lng: -60.53150 },
     year: 'Costanera',
     major: true,
     description: 'Cartel volumétrico gigante con las letras multicolor de Paraná sobre el mirador natural de las barrancas, con vista panorámica abierta al río y las islas.',
@@ -318,11 +329,11 @@ export const PLACES: Place[] = [
     name: 'El Patito Sirirí',
     subtitle: 'Escultura infantil y mirador panorámico',
     category: 'rio-y-verde',
-    zone: 'Barrancas Parque Urquiza',
-    coordinates: { lat: -31.7212, lng: -60.5408 },
+    zone: 'Barrancas Parque Urquiza · Gregoria Matorras',
+    coordinates: { lat: -31.72195, lng: -60.53095 },
     year: '1977',
     major: true,
-    description: 'La célebre escultura del patito sirirí con su tobogán sobre el filo de las altas barrancas. Un hito entrañable para generaciones de familias.',
+    description: 'La célebre escultura del patito sirirí con su tobogán sobre el filo de las altas barrancas del Parque Urquiza mirando hacia el río.',
     curiosity: 'Homenajea al pato sirirí que habita los arroyos e islas del delta entrerriano y es el balcón clásico para tomar mate frente al atardecer.'
   },
   {
@@ -331,7 +342,7 @@ export const PLACES: Place[] = [
     subtitle: '44 hectáreas de barrancas sobre el río',
     category: 'rio-y-verde',
     zone: 'Costanera Alta y Media',
-    coordinates: { lat: -31.7225, lng: -60.5367 },
+    coordinates: { lat: -31.72250, lng: -60.53670 },
     year: '1899',
     major: true,
     description: 'Parque paisajístico diseñado por Carlos Thays en tres niveles escalonados (Alta, Media y Baja), con cascadas de piedra, rosales y ceibos nativos.',
@@ -343,7 +354,7 @@ export const PLACES: Place[] = [
     subtitle: 'Homenaje a la costumbre entrerriana',
     category: 'rio-y-verde',
     zone: 'Costanera Baja',
-    coordinates: { lat: -31.7185, lng: -60.5342 },
+    coordinates: { lat: -31.71850, lng: -60.53420 },
     year: 'Costanera',
     major: true,
     description: 'Escultura monumental de un mate gigante con bombilla plateada sobre la costanera baja, junto al oleaje del río.',
@@ -355,7 +366,7 @@ export const PLACES: Place[] = [
     subtitle: 'Playa céntrica sobre el río',
     category: 'rio-y-verde',
     zone: 'Costanera Baja',
-    coordinates: { lat: -31.7178, lng: -60.5392 },
+    coordinates: { lat: -31.71780, lng: -60.53920 },
     year: 'Costanera',
     description: 'Playa urbana de arena bordeada por sauces llorones, paradores y áreas de descanso frente a la brisa del Río Paraná.',
     curiosity: 'El punto de mayor concurrencia veraniega para disfrutar del sol de la tarde y las aguas del río.'
@@ -366,7 +377,7 @@ export const PLACES: Place[] = [
     subtitle: 'Extensas playas doradas y camping',
     category: 'rio-y-verde',
     zone: 'Costanera Este',
-    coordinates: { lat: -31.7188, lng: -60.5115 },
+    coordinates: { lat: -31.71780, lng: -60.50650 },
     year: 'Costanera',
     description: 'El predio costero más amplio de Paraná, con playas de arena, frondoso bosque ribereño, quinchos y bajada de embarcaciones.',
     curiosity: 'Ofrece una vista panorámica privilegiada de la curva del río hacia el Túnel Subfluvial.'
@@ -377,7 +388,7 @@ export const PLACES: Place[] = [
     subtitle: 'Piscinas y acantilados de 30 metros',
     category: 'rio-y-verde',
     zone: 'Toma Vieja',
-    coordinates: { lat: -31.7050, lng: -60.4990 },
+    coordinates: { lat: -31.70500, lng: -60.49900 },
     year: '1886',
     description: 'Parque municipal asentado en el predio de la primitiva toma de agua potable, en el extremo norte de las barrancas paranaenses.',
     curiosity: 'Sus miradores dominan el paso del río a más de 30 metros de altura sobre las islas santafesinas.'
@@ -388,7 +399,7 @@ export const PLACES: Place[] = [
     subtitle: 'Reserva natural y bosque nativo',
     category: 'rio-y-verde',
     zone: 'Acceso Oeste',
-    coordinates: { lat: -31.7310, lng: -60.5510 },
+    coordinates: { lat: -31.73100, lng: -60.55100 },
     year: '2004',
     description: 'Gran reserva de más de 100 hectáreas con quebradas naturales, senderos agrestes y flora autóctona sobre las laderas occidentales.',
     curiosity: 'Es el mayor pulmón verde natural de la ciudad, frecuentado para caminatas, ciclismo de montaña y avistaje de aves.'
@@ -403,7 +414,7 @@ export const PLACES: Place[] = [
     subtitle: 'Veleros y dársena deportiva',
     category: 'deporte',
     zone: 'Costanera Baja',
-    coordinates: { lat: -31.7188, lng: -60.5422 },
+    coordinates: { lat: -31.71880, lng: -60.54220 },
     year: '1932',
     major: true,
     description: 'Prestigiosa institución náutica regional con amarras para veleros, yates y lanchas deportivas, además de escuela de navegación a vela.',
@@ -415,7 +426,7 @@ export const PLACES: Place[] = [
     subtitle: 'Sede Central y Parque del CAE',
     category: 'deporte',
     zone: 'Los Vascos 729',
-    coordinates: { lat: -31.7218, lng: -60.5348 },
+    coordinates: { lat: -31.72180, lng: -60.53480 },
     year: '1905',
     major: true,
     description: 'Histórico club polideportivo con canchas de rugby, hockey, tenis y básquet emplazado en la ladera del Parque Urquiza.',
@@ -427,7 +438,7 @@ export const PLACES: Place[] = [
     subtitle: 'Cuna del remo y la natación de río',
     category: 'deporte',
     zone: 'Costanera Baja',
-    coordinates: { lat: -31.7180, lng: -60.5375 },
+    coordinates: { lat: -31.71800, lng: -60.53750 },
     year: '1917',
     description: 'Entidad centenaria sobre la costanera con botes de remo travesía, canotaje y piletas recreativas junto al río.',
     curiosity: 'Pionero indiscutido en la travesía de remo cruzando el Río Paraná hacia la vecina Santa Fe.'
@@ -437,11 +448,11 @@ export const PLACES: Place[] = [
     name: 'Estadio Presbítero Bartolomé Grella',
     subtitle: 'Club Atlético Patronato',
     category: 'deporte',
-    zone: 'Villa Sarmiento',
-    coordinates: { lat: -31.7435, lng: -60.5085 },
+    zone: 'Presbítero Grella 874 · Villa Sarmiento',
+    coordinates: { lat: -31.73885, lng: -60.51135 },
     year: '1956',
     major: true,
-    description: 'Estadio del "Patrón" de Entre Ríos, con tribunas rojinegras y capacidad para más de 22.000 espectadores.',
+    description: 'Estadio del "Patrón" de Entre Ríos sobre Presbítero Grella 874, con tribunas rojinegras y capacidad para más de 22.000 espectadores.',
     curiosity: 'Patronato se consagró Campeón de la Copa Argentina 2022 y disputó partidos oficiales de la Copa Libertadores de América en este predio.'
   },
   {
@@ -450,7 +461,7 @@ export const PLACES: Place[] = [
     subtitle: 'El "Decano" de Entre Ríos',
     category: 'deporte',
     zone: 'Ruperto Pérez',
-    coordinates: { lat: -31.7390, lng: -60.5070 },
+    coordinates: { lat: -31.73900, lng: -60.50700 },
     year: '1907',
     description: 'Sede del histórico club rojiblanco paranaense, decano del fútbol de la ciudad.',
     curiosity: 'Lleva el nombre de Pedro Mutio en honor a una de las figuras más emblemáticas del fútbol litoraleño.'
@@ -461,7 +472,7 @@ export const PLACES: Place[] = [
     subtitle: 'La catedral del básquet paranaense',
     category: 'deporte',
     zone: '25 de Mayo 555',
-    coordinates: { lat: -31.7338, lng: -60.5235 },
+    coordinates: { lat: -31.73380, lng: -60.52350 },
     year: '1932',
     description: 'Tradicional estadio cubierto sede del básquetbol profesional en la Liga Nacional y Torneo Nacional de Ascenso.',
     curiosity: 'Su estadio Luis Butta es el recinto cubierto deportivo más importante del centro de la ciudad.'
@@ -472,26 +483,50 @@ export const PLACES: Place[] = [
     subtitle: 'Fairways entre ceibos y barrancas',
     category: 'deporte',
     zone: 'Parque Urquiza',
-    coordinates: { lat: -31.7250, lng: -60.5340 },
+    coordinates: { lat: -31.72500, lng: -60.53400 },
     year: '1930',
     description: 'Campo de golf de 9 hoyos integrado de forma natural a la topografía ondulada del Parque Urquiza.',
     curiosity: 'Es uno de los pocos campos de golf de Sudamérica integrados armónicamente al ejido de un parque público urbano.'
   },
 
   // ==========================================
-  // 5. PASEOS Y COMPRAS (6 Lugares)
+  // 5. PASEOS Y COMPRAS (8 Lugares)
   // ==========================================
   {
     id: 'plaza_mayo',
     name: 'Plaza 1° de Mayo',
     subtitle: 'Punto cero cívico y comercial',
     category: 'paseos-y-compras',
-    zone: 'Centro',
-    coordinates: { lat: -31.7328, lng: -60.5305 },
+    zone: 'Centro Histórico',
+    coordinates: { lat: -31.73305, lng: -60.52972 },
     year: 'Fundacional',
     major: true,
-    description: 'Plaza principal de la ciudad, nodo de convergencia peatonal, rodeada de comercios, bancos y edificios históricos.',
+    description: 'Centro exacto de la manzana histórica fundacional de Paraná, delimitada por San Martín, Urquiza, Monte Caseros y 25 de Mayo.',
     curiosity: 'Antiguamente albergó el Fuerte de Paraná durante el siglo XVIII antes de la urbanización formal.'
+  },
+  {
+    id: 'cinco_esquinas',
+    name: 'Cinco Esquinas',
+    subtitle: 'Cruce neurálgico de avenidas',
+    category: 'paseos-y-compras',
+    zone: 'Av. Ramírez y Echagüe',
+    coordinates: { lat: -31.73765, lng: -60.52215 },
+    year: 'Nodo Urbano',
+    major: true,
+    description: 'Emblemático nudo vial y comercial donde convergen cinco arterias clave de la ciudad: Av. Ramírez, Av. Echagüe, Pascual Palma, Gualeguaychú y Enrique Carbó.',
+    curiosity: 'Es el centro geográfico de circulación que conecta el casco histórico con el este y el sur de Paraná.'
+  },
+  {
+    id: 'mercado_sud',
+    name: 'Mercado Sud',
+    subtitle: 'Paseo gastronómico y cultural',
+    category: 'paseos-y-compras',
+    zone: 'Villaguay y Perón',
+    coordinates: { lat: -31.73855, lng: -60.53150 },
+    year: '1933',
+    major: true,
+    description: 'Histórico edificio art decó restaurado como plaza comercial y polo gastronómico en la intersección de calles Villaguay y Presidente Perón.',
+    curiosity: 'Fue uno de los tres mercados municipales abastecedores de la ciudad durante el siglo XX.'
   },
   {
     id: 'peatonal_san_martin',
@@ -499,7 +534,7 @@ export const PLACES: Place[] = [
     subtitle: 'Eje comercial a cielo abierto',
     category: 'paseos-y-compras',
     zone: 'San Martín',
-    coordinates: { lat: -31.7305, lng: -60.5290 },
+    coordinates: { lat: -31.73050, lng: -60.52900 },
     year: 'Paseo',
     major: true,
     description: 'Paseo comercial peatonal adoquinado que conecta de norte a sur la Plaza 1° de Mayo con la Plaza Alvear.',
@@ -511,7 +546,7 @@ export const PLACES: Place[] = [
     subtitle: 'Feria de artesanos y paseo cívico',
     category: 'paseos-y-compras',
     zone: 'San Martín y Laprida',
-    coordinates: { lat: -31.7282, lng: -60.5278 },
+    coordinates: { lat: -31.72820, lng: -60.52780 },
     year: '1880',
     major: true,
     description: 'Plaza arbolada con añosas tipas frente a la Casa Gris. Frecuentada por sus puestos de artesanos y paseos familiares.',
@@ -523,7 +558,7 @@ export const PLACES: Place[] = [
     subtitle: 'Sabores, verduras y productos regionales',
     category: 'paseos-y-compras',
     zone: 'Salta y Nogoyá',
-    coordinates: { lat: -31.7295, lng: -60.5360 },
+    coordinates: { lat: -31.72950, lng: -60.53600 },
     year: 'Tradición',
     description: 'Histórico mercado vecinal techado donde se comercializan pescados de río frescos, quesos entrerrianos, verduras y panificados caseros.',
     curiosity: 'El lugar predilecto de cocineros y locales para conseguir dorado, surubí, boga fresca del Paraná y tortas fritas.'
@@ -534,7 +569,7 @@ export const PLACES: Place[] = [
     subtitle: 'Lago artificial y paseo familiar del sur',
     category: 'paseos-y-compras',
     zone: 'Zona Sur',
-    coordinates: { lat: -31.7580, lng: -60.5150 },
+    coordinates: { lat: -31.76330, lng: -60.51520 },
     year: '1983',
     description: 'Parque recreativo del sur paranaense que rodea un lago poblado de patos y gansos, con puentes de madera y frondosos eucaliptos.',
     curiosity: 'Donado a la comunidad por la familia Gazzano, es el paseo dominical de mate predilecto de los barrios del sur.'
@@ -545,7 +580,7 @@ export const PLACES: Place[] = [
     subtitle: 'Barrio ribereño de pescadores y empanadas',
     category: 'paseos-y-compras',
     zone: 'Costanera Este',
-    coordinates: { lat: -31.7160, lng: -60.5210 },
+    coordinates: { lat: -31.71600, lng: -60.52100 },
     year: 'Ribera',
     description: 'Pintoresco barrio de pescadores junto al río, célebre por sus cantinas y puestos de empanadas de pescado y pescado frito.',
     curiosity: 'Inmortalizado en la famosa chamarrita entrerriana "Canción de Puerto Sánchez" del poeta Jorge Méndez.'

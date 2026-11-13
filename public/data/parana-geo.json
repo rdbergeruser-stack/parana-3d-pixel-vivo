@@ -105,10 +105,11 @@
       ]
     }
   ],
-  "arteries": [
+  "roads": [
     {
+      "id": "av-ramirez",
       "name": "Av. Francisco Ramírez (Columna Vertebral)",
-      "category": "columna-vertebral",
+      "type": "avenue",
       "coordinates": [
         [
           -31.7115,
@@ -145,8 +146,9 @@
       ]
     },
     {
+      "id": "av-almafuerte",
       "name": "Av. Almafuerte",
-      "category": "avenida",
+      "type": "avenue",
       "coordinates": [
         [
           -31.735,
@@ -167,8 +169,9 @@
       ]
     },
     {
-      "name": "Costanera Laurencena",
-      "category": "costanera",
+      "id": "costanera-laurencena",
+      "name": "Av. Costanera Laurencena",
+      "type": "avenue",
       "coordinates": [
         [
           -31.7195,
@@ -185,12 +188,17 @@
         [
           -31.7161,
           -60.5278
+        ],
+        [
+          -31.7176,
+          -60.5295
         ]
       ]
     },
     {
+      "id": "bv-racedo",
       "name": "Bulevar Eduardo Racedo",
-      "category": "bulevar",
+      "type": "avenue",
       "coordinates": [
         [
           -31.744,
@@ -207,12 +215,17 @@
         [
           -31.7456,
           -60.5228
+        ],
+        [
+          -31.746,
+          -60.518
         ]
       ]
     },
     {
+      "id": "bv-moreno",
       "name": "Bulevar José María Moreno",
-      "category": "bulevar",
+      "type": "avenue",
       "coordinates": [
         [
           -31.7328,
@@ -229,8 +242,9 @@
       ]
     },
     {
+      "id": "av-don-bosco",
       "name": "Av. Don Bosco",
-      "category": "avenida",
+      "type": "avenue",
       "coordinates": [
         [
           -31.723,
@@ -247,8 +261,9 @@
       ]
     },
     {
+      "id": "av-pedro-zanni",
       "name": "Av. Pedro Zanni",
-      "category": "avenida",
+      "type": "avenue",
       "coordinates": [
         [
           -31.736,
@@ -265,8 +280,9 @@
       ]
     },
     {
+      "id": "av-ejercito",
       "name": "Av. Ejército",
-      "category": "avenida",
+      "type": "avenue",
       "coordinates": [
         [
           -31.745,
@@ -283,8 +299,9 @@
       ]
     },
     {
+      "id": "alameda-federacion",
       "name": "Alameda de la Federación - Rivadavia",
-      "category": "avenida",
+      "type": "avenue",
       "coordinates": [
         [
           -31.7285,
@@ -301,26 +318,9 @@
       ]
     },
     {
-      "name": "Eje Urquiza - San Martín",
-      "category": "centro",
-      "coordinates": [
-        [
-          -31.7328,
-          -60.535
-        ],
-        [
-          -31.7328,
-          -60.5305
-        ],
-        [
-          -31.7328,
-          -60.525
-        ]
-      ]
-    },
-    {
+      "id": "acceso-norte",
       "name": "Acceso Norte",
-      "category": "acceso",
+      "type": "avenue",
       "coordinates": [
         [
           -31.7067,
@@ -337,6 +337,458 @@
         [
           -31.725,
           -60.48
+        ]
+      ]
+    },
+    {
+      "id": "eje-gualeguaychu",
+      "name": "Av. Gualeguaychú - Bavio",
+      "type": "avenue",
+      "coordinates": [
+        [
+          -31.7365,
+          -60.536
+        ],
+        [
+          -31.736,
+          -60.53
+        ],
+        [
+          -31.7355,
+          -60.524
+        ],
+        [
+          -31.735,
+          -60.5218
+        ]
+      ]
+    },
+    {
+      "id": "eje-echague",
+      "name": "Av. Pascual Echagüe",
+      "type": "avenue",
+      "coordinates": [
+        [
+          -31.7335,
+          -60.5285
+        ],
+        [
+          -31.7345,
+          -60.525
+        ],
+        [
+          -31.7376,
+          -60.5221
+        ]
+      ]
+    },
+    {
+      "id": "calle-urquiza",
+      "name": "Calle Justo José de Urquiza",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.73365,
+          -60.537
+        ],
+        [
+          -31.73365,
+          -60.533
+        ],
+        [
+          -31.73365,
+          -60.5297
+        ],
+        [
+          -31.7336,
+          -60.526
+        ],
+        [
+          -31.7335,
+          -60.522
+        ]
+      ]
+    },
+    {
+      "id": "calle-25-de-mayo",
+      "name": "Calle 25 de Mayo",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.73185,
+          -60.536
+        ],
+        [
+          -31.73185,
+          -60.5318
+        ],
+        [
+          -31.7323,
+          -60.5297
+        ],
+        [
+          -31.7325,
+          -60.525
+        ],
+        [
+          -31.733,
+          -60.5218
+        ]
+      ]
+    },
+    {
+      "id": "calle-espana",
+      "name": "Calle España",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.7308,
+          -60.535
+        ],
+        [
+          -31.7309,
+          -60.53
+        ],
+        [
+          -31.731,
+          -60.525
+        ]
+      ]
+    },
+    {
+      "id": "calle-cervantes",
+      "name": "Calle Cervantes",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.73,
+          -60.535
+        ],
+        [
+          -31.7301,
+          -60.53
+        ],
+        [
+          -31.7302,
+          -60.525
+        ]
+      ]
+    },
+    {
+      "id": "calle-laprida",
+      "name": "Calle Narciso Laprida",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.7285,
+          -60.535
+        ],
+        [
+          -31.7283,
+          -60.529
+        ],
+        [
+          -31.728,
+          -60.525
+        ]
+      ]
+    },
+    {
+      "id": "calle-nogoya",
+      "name": "Calle Nogoyá",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.7295,
+          -60.54
+        ],
+        [
+          -31.7295,
+          -60.536
+        ],
+        [
+          -31.7275,
+          -60.53
+        ],
+        [
+          -31.7265,
+          -60.524
+        ]
+      ]
+    },
+    {
+      "id": "calle-villaguay",
+      "name": "Calle Villaguay",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.7385,
+          -60.537
+        ],
+        [
+          -31.73855,
+          -60.5315
+        ],
+        [
+          -31.7386,
+          -60.525
+        ],
+        [
+          -31.7387,
+          -60.522
+        ]
+      ]
+    },
+    {
+      "id": "calle-feliciano",
+      "name": "Calle Feliciano",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.7405,
+          -60.536
+        ],
+        [
+          -31.7406,
+          -60.53
+        ],
+        [
+          -31.7407,
+          -60.524
+        ]
+      ]
+    },
+    {
+      "id": "calle-san-martin",
+      "name": "Peatonal / Calle San Martín",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.7275,
+          -60.5297
+        ],
+        [
+          -31.7282,
+          -60.5297
+        ],
+        [
+          -31.7305,
+          -60.5297
+        ],
+        [
+          -31.733,
+          -60.5297
+        ],
+        [
+          -31.736,
+          -60.5297
+        ],
+        [
+          -31.742,
+          -60.5297
+        ]
+      ]
+    },
+    {
+      "id": "calle-monte-caseros",
+      "name": "Calle Monte Caseros / Su Santidad Francisco",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.727,
+          -60.5289
+        ],
+        [
+          -31.7285,
+          -60.5289
+        ],
+        [
+          -31.73275,
+          -60.5289
+        ],
+        [
+          -31.736,
+          -60.5289
+        ],
+        [
+          -31.742,
+          -60.5289
+        ]
+      ]
+    },
+    {
+      "id": "calle-corrientes",
+      "name": "Calle Corrientes",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.721,
+          -60.5315
+        ],
+        [
+          -31.725,
+          -60.5315
+        ],
+        [
+          -31.732,
+          -60.5315
+        ],
+        [
+          -31.73355,
+          -60.52885
+        ],
+        [
+          -31.738,
+          -60.5315
+        ]
+      ]
+    },
+    {
+      "id": "calle-santa-fe",
+      "name": "Calle Santa Fe",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.724,
+          -60.5283
+        ],
+        [
+          -31.72895,
+          -60.52835
+        ],
+        [
+          -31.734,
+          -60.5283
+        ],
+        [
+          -31.74,
+          -60.5283
+        ]
+      ]
+    },
+    {
+      "id": "calle-buenos-aires",
+      "name": "Calle Buenos Aires",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.725,
+          -60.527
+        ],
+        [
+          -31.728,
+          -60.527
+        ],
+        [
+          -31.7331,
+          -60.527
+        ],
+        [
+          -31.739,
+          -60.527
+        ]
+      ]
+    },
+    {
+      "id": "calle-cordoba",
+      "name": "Calle Córdoba",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.725,
+          -60.5305
+        ],
+        [
+          -31.72825,
+          -60.52915
+        ],
+        [
+          -31.7324,
+          -60.53055
+        ],
+        [
+          -31.737,
+          -60.5305
+        ]
+      ]
+    },
+    {
+      "id": "calle-pellegrini",
+      "name": "Calle Carlos Pellegrini",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.728,
+          -60.533
+        ],
+        [
+          -31.733,
+          -60.533
+        ],
+        [
+          -31.738,
+          -60.533
+        ],
+        [
+          -31.743,
+          -60.533
+        ]
+      ]
+    },
+    {
+      "id": "calle-peron",
+      "name": "Calle Presidente Perón",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.735,
+          -60.5315
+        ],
+        [
+          -31.73855,
+          -60.5315
+        ],
+        [
+          -31.743,
+          -60.5315
+        ]
+      ]
+    },
+    {
+      "id": "calle-gregoria-matorras",
+      "name": "Calle Gregoria Matorras de San Martín",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.72195,
+          -60.53095
+        ],
+        [
+          -31.72485,
+          -60.52565
+        ],
+        [
+          -31.7265,
+          -60.523
+        ]
+      ]
+    },
+    {
+      "id": "calle-presbitero-grella",
+      "name": "Calle Presbítero Bartolomé Grella",
+      "type": "street",
+      "coordinates": [
+        [
+          -31.735,
+          -60.51135
+        ],
+        [
+          -31.73885,
+          -60.51135
+        ],
+        [
+          -31.745,
+          -60.51135
         ]
       ]
     }
@@ -489,6 +941,664 @@
         [
           -31.717,
           -60.514
+        ]
+      ]
+    }
+  ],
+  "arteries": [
+    {
+      "name": "Av. Francisco Ramírez (Columna Vertebral)",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7115,
+          -60.5185
+        ],
+        [
+          -31.718,
+          -60.5195
+        ],
+        [
+          -31.725,
+          -60.5208
+        ],
+        [
+          -31.735,
+          -60.5218
+        ],
+        [
+          -31.741,
+          -60.5222
+        ],
+        [
+          -31.7456,
+          -60.5228
+        ],
+        [
+          -31.754,
+          -60.5235
+        ],
+        [
+          -31.765,
+          -60.5245
+        ]
+      ]
+    },
+    {
+      "name": "Av. Almafuerte",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.735,
+          -60.5218
+        ],
+        [
+          -31.736,
+          -60.512
+        ],
+        [
+          -31.738,
+          -60.495
+        ],
+        [
+          -31.742,
+          -60.475
+        ]
+      ]
+    },
+    {
+      "name": "Av. Costanera Laurencena",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7195,
+          -60.5422
+        ],
+        [
+          -31.7178,
+          -60.5392
+        ],
+        [
+          -31.7175,
+          -60.534
+        ],
+        [
+          -31.7161,
+          -60.5278
+        ],
+        [
+          -31.7176,
+          -60.5295
+        ]
+      ]
+    },
+    {
+      "name": "Bulevar Eduardo Racedo",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.744,
+          -60.533
+        ],
+        [
+          -31.7445,
+          -60.528
+        ],
+        [
+          -31.745,
+          -60.5245
+        ],
+        [
+          -31.7456,
+          -60.5228
+        ],
+        [
+          -31.746,
+          -60.518
+        ]
+      ]
+    },
+    {
+      "name": "Bulevar José María Moreno",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7328,
+          -60.545
+        ],
+        [
+          -31.738,
+          -60.538
+        ],
+        [
+          -31.744,
+          -60.533
+        ]
+      ]
+    },
+    {
+      "name": "Av. Don Bosco",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.723,
+          -60.521
+        ],
+        [
+          -31.721,
+          -60.51
+        ],
+        [
+          -31.718,
+          -60.495
+        ]
+      ]
+    },
+    {
+      "name": "Av. Pedro Zanni",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.736,
+          -60.505
+        ],
+        [
+          -31.748,
+          -60.507
+        ],
+        [
+          -31.762,
+          -60.509
+        ]
+      ]
+    },
+    {
+      "name": "Av. Ejército",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.745,
+          -60.545
+        ],
+        [
+          -31.755,
+          -60.547
+        ],
+        [
+          -31.765,
+          -60.549
+        ]
+      ]
+    },
+    {
+      "name": "Alameda de la Federación - Rivadavia",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7285,
+          -60.5265
+        ],
+        [
+          -31.724,
+          -60.532
+        ],
+        [
+          -31.7215,
+          -60.5375
+        ]
+      ]
+    },
+    {
+      "name": "Acceso Norte",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7067,
+          -60.505
+        ],
+        [
+          -31.712,
+          -60.498
+        ],
+        [
+          -31.72,
+          -60.49
+        ],
+        [
+          -31.725,
+          -60.48
+        ]
+      ]
+    },
+    {
+      "name": "Av. Gualeguaychú - Bavio",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7365,
+          -60.536
+        ],
+        [
+          -31.736,
+          -60.53
+        ],
+        [
+          -31.7355,
+          -60.524
+        ],
+        [
+          -31.735,
+          -60.5218
+        ]
+      ]
+    },
+    {
+      "name": "Av. Pascual Echagüe",
+      "category": "avenida",
+      "coordinates": [
+        [
+          -31.7335,
+          -60.5285
+        ],
+        [
+          -31.7345,
+          -60.525
+        ],
+        [
+          -31.7376,
+          -60.5221
+        ]
+      ]
+    },
+    {
+      "name": "Calle Justo José de Urquiza",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.73365,
+          -60.537
+        ],
+        [
+          -31.73365,
+          -60.533
+        ],
+        [
+          -31.73365,
+          -60.5297
+        ],
+        [
+          -31.7336,
+          -60.526
+        ],
+        [
+          -31.7335,
+          -60.522
+        ]
+      ]
+    },
+    {
+      "name": "Calle 25 de Mayo",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.73185,
+          -60.536
+        ],
+        [
+          -31.73185,
+          -60.5318
+        ],
+        [
+          -31.7323,
+          -60.5297
+        ],
+        [
+          -31.7325,
+          -60.525
+        ],
+        [
+          -31.733,
+          -60.5218
+        ]
+      ]
+    },
+    {
+      "name": "Calle España",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.7308,
+          -60.535
+        ],
+        [
+          -31.7309,
+          -60.53
+        ],
+        [
+          -31.731,
+          -60.525
+        ]
+      ]
+    },
+    {
+      "name": "Calle Cervantes",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.73,
+          -60.535
+        ],
+        [
+          -31.7301,
+          -60.53
+        ],
+        [
+          -31.7302,
+          -60.525
+        ]
+      ]
+    },
+    {
+      "name": "Calle Narciso Laprida",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.7285,
+          -60.535
+        ],
+        [
+          -31.7283,
+          -60.529
+        ],
+        [
+          -31.728,
+          -60.525
+        ]
+      ]
+    },
+    {
+      "name": "Calle Nogoyá",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.7295,
+          -60.54
+        ],
+        [
+          -31.7295,
+          -60.536
+        ],
+        [
+          -31.7275,
+          -60.53
+        ],
+        [
+          -31.7265,
+          -60.524
+        ]
+      ]
+    },
+    {
+      "name": "Calle Villaguay",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.7385,
+          -60.537
+        ],
+        [
+          -31.73855,
+          -60.5315
+        ],
+        [
+          -31.7386,
+          -60.525
+        ],
+        [
+          -31.7387,
+          -60.522
+        ]
+      ]
+    },
+    {
+      "name": "Calle Feliciano",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.7405,
+          -60.536
+        ],
+        [
+          -31.7406,
+          -60.53
+        ],
+        [
+          -31.7407,
+          -60.524
+        ]
+      ]
+    },
+    {
+      "name": "Peatonal / Calle San Martín",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.7275,
+          -60.5297
+        ],
+        [
+          -31.7282,
+          -60.5297
+        ],
+        [
+          -31.7305,
+          -60.5297
+        ],
+        [
+          -31.733,
+          -60.5297
+        ],
+        [
+          -31.736,
+          -60.5297
+        ],
+        [
+          -31.742,
+          -60.5297
+        ]
+      ]
+    },
+    {
+      "name": "Calle Monte Caseros / Su Santidad Francisco",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.727,
+          -60.5289
+        ],
+        [
+          -31.7285,
+          -60.5289
+        ],
+        [
+          -31.73275,
+          -60.5289
+        ],
+        [
+          -31.736,
+          -60.5289
+        ],
+        [
+          -31.742,
+          -60.5289
+        ]
+      ]
+    },
+    {
+      "name": "Calle Corrientes",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.721,
+          -60.5315
+        ],
+        [
+          -31.725,
+          -60.5315
+        ],
+        [
+          -31.732,
+          -60.5315
+        ],
+        [
+          -31.73355,
+          -60.52885
+        ],
+        [
+          -31.738,
+          -60.5315
+        ]
+      ]
+    },
+    {
+      "name": "Calle Santa Fe",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.724,
+          -60.5283
+        ],
+        [
+          -31.72895,
+          -60.52835
+        ],
+        [
+          -31.734,
+          -60.5283
+        ],
+        [
+          -31.74,
+          -60.5283
+        ]
+      ]
+    },
+    {
+      "name": "Calle Buenos Aires",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.725,
+          -60.527
+        ],
+        [
+          -31.728,
+          -60.527
+        ],
+        [
+          -31.7331,
+          -60.527
+        ],
+        [
+          -31.739,
+          -60.527
+        ]
+      ]
+    },
+    {
+      "name": "Calle Córdoba",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.725,
+          -60.5305
+        ],
+        [
+          -31.72825,
+          -60.52915
+        ],
+        [
+          -31.7324,
+          -60.53055
+        ],
+        [
+          -31.737,
+          -60.5305
+        ]
+      ]
+    },
+    {
+      "name": "Calle Carlos Pellegrini",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.728,
+          -60.533
+        ],
+        [
+          -31.733,
+          -60.533
+        ],
+        [
+          -31.738,
+          -60.533
+        ],
+        [
+          -31.743,
+          -60.533
+        ]
+      ]
+    },
+    {
+      "name": "Calle Presidente Perón",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.735,
+          -60.5315
+        ],
+        [
+          -31.73855,
+          -60.5315
+        ],
+        [
+          -31.743,
+          -60.5315
+        ]
+      ]
+    },
+    {
+      "name": "Calle Gregoria Matorras de San Martín",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.72195,
+          -60.53095
+        ],
+        [
+          -31.72485,
+          -60.52565
+        ],
+        [
+          -31.7265,
+          -60.523
+        ]
+      ]
+    },
+    {
+      "name": "Calle Presbítero Bartolomé Grella",
+      "category": "calle",
+      "coordinates": [
+        [
+          -31.735,
+          -60.51135
+        ],
+        [
+          -31.73885,
+          -60.51135
+        ],
+        [
+          -31.745,
+          -60.51135
         ]
       ]
     }
