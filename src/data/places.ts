@@ -73,6 +73,42 @@ export const PLACES: Place[] = [
   // 1. HISTORIA Y PATRIMONIO (7 Lugares)
   // ==========================================
   {
+    id: 'monumento_urquiza',
+    name: 'Monumento al Gral. Justo José de Urquiza',
+    subtitle: 'El prócer de la Confederación a caballo',
+    category: 'historia',
+    zone: 'Parque Urquiza - Barranca Alta',
+    coordinates: { lat: -31.7236, lng: -60.5358 },
+    year: '1920',
+    major: true,
+    description: 'Monumental conjunto escultórico de bronce y mármol de Carrara erigido sobre la cima de las barrancas del Parque Urquiza.',
+    curiosity: 'La colosal estatua ecuestre de Urquiza mira hacia el horizonte del río y la llanura entrerriana.'
+  },
+  {
+    id: 'easter_egg_mate_gigante',
+    name: 'El Gran Mate Cósmico de Urquiza',
+    subtitle: '¿Quién sostiene a Paraná desde abajo?',
+    category: 'historia',
+    zone: 'Cimientos del Inframundo Paranaense',
+    coordinates: { lat: -31.7328, lng: -60.5305 },
+    year: 'Eterno',
+    major: true,
+    description: '¡Has descubierto el secreto oculto de la maqueta! En las entrañas de la tierra entrerriana, un gigantesco Mate de porongo y plata con el Sol de Mayo sostiene el peso de la ciudad con pura energía litoraleña.',
+    curiosity: 'Si mirás la maqueta desde abajo verás la bombilla plateada apuntando al corazón de la Plaza 1° de Mayo.'
+  },
+  {
+    id: 'easter_egg_dorado_gigante',
+    name: 'El Dorado Mítico del Río Paraná',
+    subtitle: 'El "Tigre de los Ríos" Legendario',
+    category: 'rio-y-verde',
+    zone: 'Canal del Islote Curupí',
+    coordinates: { lat: -31.7200, lng: -60.5480 },
+    year: 'Mítico',
+    major: true,
+    description: 'Un dorado colosal de escamas doradas y aletas brillantes que nada en los remansos entre la Costanera y el Islote Curupí, custodiando las aguas paranaenses.',
+    curiosity: 'Cuentan los pescadores de Puerto Sánchez que salta al atardecer cuando el sol tiñe el río de oro puro.'
+  },
+  {
     id: 'catedral_metropolitana',
     name: 'Catedral Metropolitana',
     subtitle: 'Nuestra Señora del Rosario',

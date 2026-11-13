@@ -62,9 +62,9 @@ export function getShorelineLng(lat: number): number {
     return -60.505;
   }
   if (lat > -31.717) {
-    // Puerto Nuevo / Costanera Este
+    // Puerto Nuevo / Costanera Este (docks reach -60.532)
     const t = (lat - (-31.717)) / 0.007;
-    return -60.528 + t * 0.023;
+    return -60.532 + t * 0.027;
   }
   if (lat > -31.722) {
     // Costanera Baja / Parque Urquiza / Club Náutico
@@ -114,10 +114,16 @@ export function getElevation(lat: number, lng: number): number {
   // Distance inland from the shoreline (in degrees of longitude)
   const distFromShore = lng - shoreLng;
 
+  // High barranca bluffs (Patito Sirirí, Mirador de las Letras, Anfiteatro Alto)
+  const isHighBarranca = lat >= -31.7225 && lat <= -31.7195 && lng >= -60.5415 && lng <= -60.5380;
+  if (isHighBarranca) {
+    return 3.5;
+  }
+
   // 2. Costanera Baja (immediately adjacent to the river)
   // Specific coastal lowlands: Thompson, Puerto Nuevo, Balneario Municipal, Bajada Grande
   const isThompson = lat >= -31.720 && lat <= -31.716 && lng >= -60.515 && lng <= -60.505;
-  const isPuertoNuevo = lat >= -31.717 && lat <= -31.715 && lng >= -60.530 && lng <= -60.525;
+  const isPuertoNuevo = lat >= -31.718 && lat <= -31.715 && lng >= -60.532 && lng <= -60.525;
   const isCostaneraBaja = lat >= -31.719 && lat <= -31.717 && lng >= -60.542 && lng <= -60.534;
   const isBajadaGrande = lat >= -31.730 && lat <= -31.726 && lng >= -60.565 && lng <= -60.558;
 
