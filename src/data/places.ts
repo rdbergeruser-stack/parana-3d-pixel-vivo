@@ -144,6 +144,18 @@ export const PLACES: Place[] = [
     curiosity: 'El reloj de la torre fue importado directamente de Europa a finales del siglo XIX y sigue marcando las horas de la ciudad.'
   },
   {
+    id: 'colegio_del_huerto',
+    name: 'Colegio Nuestra Señora del Huerto',
+    subtitle: 'Sede del Congreso de la Confederación',
+    category: 'historia',
+    zone: 'Plaza 1° de Mayo',
+    coordinates: { lat: -31.7315, lng: -60.5300 },
+    year: '1860',
+    major: true,
+    description: 'Histórico solar educativo y religioso contiguo a la Catedral sobre Plaza 1° de Mayo. En este solar sesionó el Congreso Constituyente de la Confederación Argentina.',
+    curiosity: 'Sus claustros conservan el aula histórica donde los legisladores confederados debatieron el destino de la Nación.'
+  },
+  {
     id: 'escuela_normal',
     name: 'Escuela Normal José María Torres',
     subtitle: 'Cuna del magisterio argentino',
@@ -228,6 +240,18 @@ export const PLACES: Place[] = [
     major: true,
     description: 'Antiguos galpones aduaneros portuarios de ladrillo reciclados frente al río. Espacio principal de ferias del libro, exposiciones y festivales.',
     curiosity: 'A sus pies se yergue la histórica Grúa Roja de hierro forjado que desembarcaba cargas del río en el siglo XX.'
+  },
+  {
+    id: 'la_vieja_usina',
+    name: 'Centro Cultural La Vieja Usina',
+    subtitle: 'Patrimonio industrial y usina de arte',
+    category: 'cultura',
+    zone: 'Gregoria Matorras 861 (Costanera/Corrientes)',
+    coordinates: { lat: -31.7195, lng: -60.5315 },
+    year: '1921',
+    major: true,
+    description: 'Antigua usina eléctrica de principios de siglo XX de arquitectura ladrillera fabril con chimenea, reciclada como centro cultural y sala de convenciones.',
+    curiosity: 'Su chimenea cilíndrica de ladrillo rojo de más de 30 metros de altura aún se yergue como faro visible del barrio de la costa.'
   },
   {
     id: 'anfiteatro_santangelo',

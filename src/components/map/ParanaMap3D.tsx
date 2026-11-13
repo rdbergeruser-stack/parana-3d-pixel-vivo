@@ -31,24 +31,14 @@ import {
   BookOpen,
   Route as RouteIcon
 } from 'lucide-react';
-import {
-  buildCatedral,
-  buildPalacioMunicipal,
-  buildTeatro3DeFebrero,
-  buildPatitoSiriri,
-  buildMonumentoUrquiza,
-  buildSalaMayo,
-  buildTunelSubfluvial,
-  buildEstadioGrella,
-  buildEasterEggMate,
-  buildEasterEggDorado
-} from './VoxelLandmarks';
+import { buildModelForPlace } from './VoxelLandmarks';
 
 interface GeoFeatureData {
   coastline: [number, number][];
   islands: { name: string; polygon: [number, number][] }[];
   arteries: { name: string; category: string; coordinates: [number, number][] }[];
   parks: { name: string; polygon: [number, number][] }[];
+  railways?: { id: string; name: string; coordinates: [number, number][] }[];
 }
 
 // Point-in-polygon algorithm (ray-casting)
@@ -139,47 +129,62 @@ export default function ParanaMap3D() {
     pinGroup: THREE.Group;
     pinSprites: { sprite: THREE.Sprite; place: Place; index: number; basePos: THREE.Vector3 }[];
     routeLineGroup: THREE.Group;
-    flyTarget: THREE.Vector3 | null;
-    flyCameraTarget: THREE.Vector3 | null;
+    isAnimatingCamera: boolean;
+    animStartTime: number;
+    animDuration: number;
+    startCameraPos: THREE.Vector3;
+    endCameraPos: THREE.Vector3;
+    startControlsTarget: THREE.Vector3;
+    endControlsTarget: THREE.Vector3;
     doradoMesh: THREE.Group | null;
   } | null>(null);
 
-  // Fly camera to specific 3D location smoothly
+  // Fly camera to specific 3D location smoothly with time-based cubic ease-out
   const flyToPlace = useCallback((place: Place) => {
     if (!engineRef.current) return;
+    const { camera, controls } = engineRef.current;
+
+    const targetPos = new THREE.Vector3();
+    const cameraPos = new THREE.Vector3();
 
     if (place.id === 'easter_egg_mate_gigante') {
-      // Underneath the diorama base
-      engineRef.current.flyTarget = new THREE.Vector3(0, -18, 0);
-      engineRef.current.flyCameraTarget = new THREE.Vector3(45, -34, 45);
-      setSelectedPlace(place);
-      return;
+      targetPos.set(0, -18, 0);
+      cameraPos.set(45, -34, 45);
+    } else if (place.id === 'easter_egg_dorado_gigante') {
+      targetPos.set(-170, 0.4, -140);
+      cameraPos.set(-120, 35, -95);
+    } else {
+      const { x, z } = projectTo3D(place.coordinates.lat, place.coordinates.lng);
+      const elev = getElevation(place.coordinates.lat, place.coordinates.lng);
+      targetPos.set(x, elev, z);
+      const offset = new THREE.Vector3(75, 85, 75);
+      cameraPos.copy(targetPos).add(offset);
     }
 
-    if (place.id === 'easter_egg_dorado_gigante') {
-      // River channel
-      engineRef.current.flyTarget = new THREE.Vector3(-170, 0.4, -140);
-      engineRef.current.flyCameraTarget = new THREE.Vector3(-120, 35, -95);
-      setSelectedPlace(place);
-      return;
-    }
+    engineRef.current.startControlsTarget.copy(controls.target);
+    engineRef.current.endControlsTarget.copy(targetPos);
+    engineRef.current.startCameraPos.copy(camera.position);
+    engineRef.current.endCameraPos.copy(cameraPos);
+    engineRef.current.animStartTime = performance.now();
+    engineRef.current.animDuration = 900;
+    engineRef.current.isAnimatingCamera = true;
 
-    const { x, z } = projectTo3D(place.coordinates.lat, place.coordinates.lng);
-    const elev = getElevation(place.coordinates.lat, place.coordinates.lng);
-
-    const targetPos = new THREE.Vector3(x, elev, z);
-    const cameraOffset = new THREE.Vector3(80, 95, 80);
-
-    engineRef.current.flyTarget = targetPos.clone();
-    engineRef.current.flyCameraTarget = targetPos.clone().add(cameraOffset);
     setSelectedPlace(place);
   }, []);
 
   // Reset camera view to Plaza 1° de Mayo center
   const resetCameraView = useCallback(() => {
     if (!engineRef.current) return;
-    engineRef.current.flyTarget = new THREE.Vector3(0, 4, 0);
-    engineRef.current.flyCameraTarget = new THREE.Vector3(180, 210, 180);
+    const { camera, controls } = engineRef.current;
+
+    engineRef.current.startControlsTarget.copy(controls.target);
+    engineRef.current.endControlsTarget.set(0, 4, 0);
+    engineRef.current.startCameraPos.copy(camera.position);
+    engineRef.current.endCameraPos.set(180, 210, 180);
+    engineRef.current.animStartTime = performance.now();
+    engineRef.current.animDuration = 900;
+    engineRef.current.isAnimatingCamera = true;
+
     setSelectedPlace(null);
   }, []);
 
@@ -275,10 +280,21 @@ export default function ParanaMap3D() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.target.set(0, 4, 0); // Plaza 1° de Mayo
-    controls.minDistance = 25;
+    controls.minDistance = 10;
     controls.maxDistance = 650;
     controls.maxPolarAngle = Math.PI * 0.72; // Allow tilting below horizon to view under the diorama
     controls.minPolarAngle = 0.05;
+
+    // Immediately stop any auto-camera flying animation on manual user control/interaction
+    const cancelCameraAnimation = () => {
+      if (engineRef.current && engineRef.current.isAnimatingCamera) {
+        engineRef.current.isAnimatingCamera = false;
+      }
+    };
+    controls.addEventListener('start', cancelCameraAnimation);
+    renderer.domElement.addEventListener('wheel', cancelCameraAnimation, { passive: true });
+    renderer.domElement.addEventListener('pointerdown', cancelCameraAnimation);
+    renderer.domElement.addEventListener('touchstart', cancelCameraAnimation, { passive: true });
 
     // 3. Diorama Lighting (Warm sunny afternoon over the Paraná river)
     const ambientLight = new THREE.HemisphereLight('#f1f5f9', '#475569', 0.95);
@@ -349,24 +365,31 @@ export default function ParanaMap3D() {
       pinGroup,
       pinSprites,
       routeLineGroup,
-      flyTarget: null,
-      flyCameraTarget: null,
+      isAnimatingCamera: false,
+      animStartTime: 0,
+      animDuration: 900,
+      startCameraPos: new THREE.Vector3(),
+      endCameraPos: new THREE.Vector3(),
+      startControlsTarget: new THREE.Vector3(),
+      endControlsTarget: new THREE.Vector3(),
       doradoMesh: null
     };
 
-    // 6. Load OSM Geo Data & Build Terrain + Flora + Arteries + Bespoke Landmarks
+    // 6. Load OSM Geo Data & Build Terrain + Flora + Arteries + Railways + All 40 Place Models
     fetch('/data/parana-geo.json')
       .then(res => res.json())
       .then((geoData: GeoFeatureData) => {
         if (isDisposed) return;
 
-        buildVoxelTerrain(scene, geoData);
-        buildArteries(scene, geoData);
-        buildFlora(scene, geoData);
-        const { dorado } = buildBespokeLandmarks(scene);
+        const { dorado, exclusions } = buildAllPlaceLandmarks(scene);
         if (engineRef.current) {
           engineRef.current.doradoMesh = dorado;
         }
+
+        buildVoxelTerrain(scene, geoData, exclusions);
+        buildArteries(scene, geoData);
+        buildRailways(scene, geoData);
+        buildFlora(scene, geoData);
         buildPlacePins(pinGroup, pinSprites);
         setIsLoaded(true);
       })
@@ -437,17 +460,27 @@ export default function ParanaMap3D() {
       const delta = clock.getDelta();
       const elapsedTime = clock.getElapsedTime();
 
-      // Smooth camera flying lerp
-      if (engineRef.current?.flyTarget && engineRef.current?.flyCameraTarget) {
-        controls.target.lerp(engineRef.current.flyTarget, 0.07);
-        camera.position.lerp(engineRef.current.flyCameraTarget, 0.07);
+      // Smooth time-based camera flying with cubic ease-out
+      if (engineRef.current?.isAnimatingCamera) {
+        const elapsed = performance.now() - engineRef.current.animStartTime;
+        const progress = Math.min(1, Math.max(0, elapsed / engineRef.current.animDuration));
+        const ease = 1 - Math.pow(1 - progress, 3);
 
-        if (
-          controls.target.distanceTo(engineRef.current.flyTarget) < 0.2 &&
-          camera.position.distanceTo(engineRef.current.flyCameraTarget) < 0.5
-        ) {
-          engineRef.current.flyTarget = null;
-          engineRef.current.flyCameraTarget = null;
+        controls.target.lerpVectors(
+          engineRef.current.startControlsTarget,
+          engineRef.current.endControlsTarget,
+          ease
+        );
+        camera.position.lerpVectors(
+          engineRef.current.startCameraPos,
+          engineRef.current.endCameraPos,
+          ease
+        );
+
+        if (progress >= 1 || camera.position.distanceTo(engineRef.current.endCameraPos) < 0.1) {
+          controls.target.copy(engineRef.current.endControlsTarget);
+          camera.position.copy(engineRef.current.endCameraPos);
+          engineRef.current.isAnimatingCamera = false;
         }
       }
 
@@ -498,6 +531,10 @@ export default function ParanaMap3D() {
       isDisposed = true;
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      controls.removeEventListener('start', cancelCameraAnimation);
+      renderer.domElement.removeEventListener('wheel', cancelCameraAnimation);
+      renderer.domElement.removeEventListener('pointerdown', cancelCameraAnimation);
+      renderer.domElement.removeEventListener('touchstart', cancelCameraAnimation);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('click', onClick);
       controls.dispose();
@@ -1090,7 +1127,11 @@ export default function ParanaMap3D() {
 /**
  * 1. Build Quantized Voxel Terrain with stepped Parque Urquiza Barrancas
  */
-function buildVoxelTerrain(scene: THREE.Scene, geoData: GeoFeatureData) {
+function buildVoxelTerrain(
+  scene: THREE.Scene,
+  geoData: GeoFeatureData,
+  exclusions: { x: number; z: number; r: number }[]
+) {
   // Grid parameters (1 unit ≈ 10 meters)
   const step = 6.0; // 60m blocks
   const xMin = -280;
@@ -1122,7 +1163,6 @@ function buildVoxelTerrain(scene: THREE.Scene, geoData: GeoFeatureData) {
   bldgMesh.castShadow = true;
   bldgMesh.receiveShadow = true;
 
-  const matrix = new THREE.Matrix4();
   const color = new THREE.Color();
   const dummy = new THREE.Object3D();
 
@@ -1202,25 +1242,18 @@ function buildVoxelTerrain(scene: THREE.Scene, geoData: GeoFeatureData) {
 
       // Place procedural urban filler buildings on urban plateau (Y = 4)
       if (elev >= 3.8 && !isPark && !isIsland) {
-        // Exclude footprint of bespoke landmarks so generic cubes don't clip them
-        const isNearLandmark = [
-          { x: 6.6, z: -5.5, r: 14 },     // Catedral Metropolitana
-          { x: -6.6, z: -10.0, r: 12 },   // Palacio Municipal
-          { x: -9.5, z: 15.5, r: 12 },    // Teatro 3 de Febrero
-          { x: -97.5, z: -128.6, r: 12 }, // Patito Sirirí
-          { x: -50.2, z: -102.0, r: 12 }, // Monumento Urquiza
-          { x: 25.6, z: -185.2, r: 18 },  // Sala Mayo
-          { x: 241.4, z: -289.4, r: 16 }, // Túnel Subfluvial
-          { x: 208.3, z: 118.6, r: 24 },  // Estadio Grella
-        ].some(l => (x - l.x) * (x - l.x) + (z - l.z) * (z - l.z) < l.r * l.r);
+        // Exclude footprint of all 40 place models so generic blocks don't clip them
+        const isNearLandmark = exclusions.some(
+          l => (x - l.x) * (x - l.x) + (z - l.z) * (z - l.z) < l.r * l.r
+        );
 
         if (!isNearLandmark) {
           // Pseudo-random deterministic hash based on coordinates
           const hash = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
           const rand = hash - Math.floor(hash);
 
-          if (rand > 0.35) {
-            const bldgHeight = 2.0 + rand * 5.0; // 2 to 7 units tall
+          if (rand > 0.38) {
+            const bldgHeight = 2.0 + rand * 4.5; // 2 to 6.5 units tall
             dummy.position.set(x, elev + bldgHeight / 2, z);
             dummy.scale.set(1, bldgHeight, 1);
             dummy.updateMatrix();
@@ -1251,15 +1284,26 @@ function buildVoxelTerrain(scene: THREE.Scene, geoData: GeoFeatureData) {
 }
 
 /**
- * 2. Build Main Arteries (Avenues) as dark asphalt strips
+ * 2. Build Main Arteries (Avenues) as dark asphalt strips with dashed centerlines
  */
 function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
   const roadMat = new THREE.MeshStandardMaterial({
-    color: '#334155',
-    roughness: 0.9,
-    metalness: 0.1
+    color: '#1e293b',
+    roughness: 0.85,
+    metalness: 0.15
   });
 
+  const lineMat = new THREE.MeshBasicMaterial({
+    color: '#fef08a'
+  });
+
+  const secondaryMat = new THREE.MeshStandardMaterial({
+    color: '#334155',
+    roughness: 0.9,
+    metalness: 0.05
+  });
+
+  // 1. Primary avenues from OSM geoData
   geoData.arteries.forEach(artery => {
     if (!artery.coordinates || artery.coordinates.length < 2) return;
 
@@ -1276,7 +1320,9 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
       const v2 = new THREE.Vector3(p2.x, elev2 + 0.08, p2.z);
 
       const distance = v1.distanceTo(v2);
-      const roadGeom = new THREE.BoxGeometry(4.0, 0.15, distance);
+      if (distance < 0.5) continue;
+
+      const roadGeom = new THREE.BoxGeometry(4.2, 0.15, distance);
       const roadMesh = new THREE.Mesh(roadGeom, roadMat);
 
       // Position at midpoint
@@ -1284,6 +1330,129 @@ function buildArteries(scene: THREE.Scene, geoData: GeoFeatureData) {
       roadMesh.lookAt(v2);
       roadMesh.receiveShadow = true;
       scene.add(roadMesh);
+
+      // Dashed yellow centerline
+      const numDashes = Math.max(1, Math.floor(distance / 6));
+      for (let d = 0; d < numDashes; d++) {
+        const t = (d + 0.5) / numDashes;
+        const dashPos = new THREE.Vector3().lerpVectors(v1, v2, t);
+        dashPos.y += 0.09;
+
+        const dashGeom = new THREE.BoxGeometry(0.25, 0.02, Math.min(2.5, distance / numDashes * 0.6));
+        const dashMesh = new THREE.Mesh(dashGeom, lineMat);
+        dashMesh.position.copy(dashPos);
+        dashMesh.lookAt(v2);
+        scene.add(dashMesh);
+      }
+    }
+  });
+
+  // 2. Secondary urban grid for the historical city center (Damero Español)
+  const gridX = [-70, -45, -20, 5, 30, 55, 80, 105];
+  const gridZ = [-50, -25, 0, 25, 50, 75, 100];
+
+  // North-South streets
+  gridX.forEach(x => {
+    const sGeom = new THREE.BoxGeometry(2.4, 0.12, 150);
+    const sMesh = new THREE.Mesh(sGeom, secondaryMat);
+    sMesh.position.set(x, 4.07, 25);
+    sMesh.receiveShadow = true;
+    scene.add(sMesh);
+  });
+
+  // East-West streets
+  gridZ.forEach(z => {
+    const sGeom = new THREE.BoxGeometry(175, 0.12, 2.4);
+    const sMesh = new THREE.Mesh(sGeom, secondaryMat);
+    sMesh.position.set(17.5, 4.07, z);
+    sMesh.receiveShadow = true;
+    scene.add(sMesh);
+  });
+}
+
+/**
+ * 3. Build General Urquiza Railway Line (Ballast, Wooden Ties, Steel Rails)
+ */
+function buildRailways(scene: THREE.Scene, geoData: GeoFeatureData) {
+  if (!geoData.railways || geoData.railways.length === 0) return;
+
+  const ballastMat = new THREE.MeshStandardMaterial({
+    color: '#334155',
+    roughness: 0.95,
+    metalness: 0.1
+  });
+
+  const tieMat = new THREE.MeshStandardMaterial({
+    color: '#451a03',
+    roughness: 0.85
+  });
+
+  const railMat = new THREE.MeshStandardMaterial({
+    color: '#cbd5e1',
+    roughness: 0.25,
+    metalness: 0.85
+  });
+
+  const tieGeom = new THREE.BoxGeometry(2.6, 0.14, 0.45);
+
+  geoData.railways.forEach(track => {
+    if (!track.coordinates || track.coordinates.length < 2) return;
+
+    for (let i = 0; i < track.coordinates.length - 1; i++) {
+      const [lat1, lng1] = track.coordinates[i];
+      const [lat2, lng2] = track.coordinates[i + 1];
+
+      const p1 = projectTo3D(lat1, lng1);
+      const p2 = projectTo3D(lat2, lng2);
+      const elev1 = getElevation(lat1, lng1);
+      const elev2 = getElevation(lat2, lng2);
+
+      const v1 = new THREE.Vector3(p1.x, elev1 + 0.1, p1.z);
+      const v2 = new THREE.Vector3(p2.x, elev2 + 0.1, p2.z);
+      const dist = v1.distanceTo(v2);
+      if (dist < 0.4) continue;
+
+      const mid = new THREE.Vector3().copy(v1).add(v2).multiplyScalar(0.5);
+      const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
+
+      // 1. Crushed stone ballast bed
+      const ballastGeom = new THREE.BoxGeometry(3.0, 0.15, dist);
+      const ballastMesh = new THREE.Mesh(ballastGeom, ballastMat);
+      ballastMesh.position.copy(mid);
+      ballastMesh.lookAt(v2);
+      ballastMesh.receiveShadow = true;
+      scene.add(ballastMesh);
+
+      // 2. Wooden ties (durmientes) spaced evenly
+      const tieSpacing = 1.35;
+      const numTies = Math.max(1, Math.floor(dist / tieSpacing));
+      for (let t = 0; t < numTies; t++) {
+        const fraction = (t + 0.5) / numTies;
+        const tiePos = new THREE.Vector3().lerpVectors(v1, v2, fraction);
+        tiePos.y += 0.08;
+
+        const tieMesh = new THREE.Mesh(tieGeom, tieMat);
+        tieMesh.position.copy(tiePos);
+        tieMesh.lookAt(v2);
+        scene.add(tieMesh);
+      }
+
+      // 3. Twin metallic steel rails
+      const perp = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(0.7);
+
+      const leftRailGeom = new THREE.BoxGeometry(0.12, 0.16, dist);
+      const leftRail = new THREE.Mesh(leftRailGeom, railMat);
+      leftRail.position.copy(mid).add(perp);
+      leftRail.position.y += 0.16;
+      leftRail.lookAt(new THREE.Vector3().copy(v2).add(perp));
+      scene.add(leftRail);
+
+      const rightRailGeom = new THREE.BoxGeometry(0.12, 0.16, dist);
+      const rightRail = new THREE.Mesh(rightRailGeom, railMat);
+      rightRail.position.copy(mid).sub(perp);
+      rightRail.position.y += 0.16;
+      rightRail.lookAt(new THREE.Vector3().copy(v2).sub(perp));
+      scene.add(rightRail);
     }
   });
 }
@@ -1458,58 +1627,65 @@ function buildPlacePins(
 }
 
 /**
- * 5. Build Bespoke Voxel Landmarks and Easter Eggs
+ * 5. Build 3D Voxel Models for 100% of Places in places.ts and Easter Eggs
  */
-function buildBespokeLandmarks(scene: THREE.Scene) {
-  // 1. Catedral Metropolitana
-  const catedral = buildCatedral();
-  catedral.position.set(6.6, 4.0, -5.5);
-  scene.add(catedral);
+function buildAllPlaceLandmarks(scene: THREE.Scene) {
+  let doradoMesh: THREE.Group | null = null;
+  const exclusions: { x: number; z: number; r: number }[] = [];
 
-  // 2. Palacio Municipal
-  const palacio = buildPalacioMunicipal();
-  palacio.position.set(-6.6, 4.0, -10.0);
-  scene.add(palacio);
+  PLACES.forEach(place => {
+    const model = buildModelForPlace(place);
+    if (!model) return;
 
-  // 3. Teatro Municipal 3 de Febrero
-  const teatro = buildTeatro3DeFebrero();
-  teatro.position.set(-9.5, 4.0, 15.5);
-  scene.add(teatro);
+    if (place.id === 'easter_egg_mate_gigante') {
+      model.position.set(0, -26.0, 0);
+      scene.add(model);
+      return;
+    }
 
-  // 4. El Patito Sirirí
-  const patito = buildPatitoSiriri();
-  patito.position.set(-97.5, 3.5, -128.6);
-  scene.add(patito);
+    if (place.id === 'easter_egg_dorado_gigante') {
+      model.position.set(-170.0, 0.4, -140.0);
+      scene.add(model);
+      doradoMesh = model;
+      return;
+    }
 
-  // 5. Monumento al Gral. Justo José de Urquiza
-  const monumentoUrquiza = buildMonumentoUrquiza();
-  monumentoUrquiza.position.set(-50.2, 3.5, -102.0);
-  scene.add(monumentoUrquiza);
+    const { x, z } = projectTo3D(place.coordinates.lat, place.coordinates.lng);
+    const elev = getElevation(place.coordinates.lat, place.coordinates.lng);
+    model.position.set(x, elev, z);
+    scene.add(model);
 
-  // 6. Sala Mayo y Puerto Nuevo
-  const salaMayo = buildSalaMayo();
-  salaMayo.position.set(25.6, 1.0, -185.2);
-  scene.add(salaMayo);
+    // Dynamic exclusion radius based on landmark footprint
+    let r = 12;
+    if (
+      place.id === 'catedral_metropolitana' ||
+      place.id === 'estadio_patronato' ||
+      place.id === 'estacion_ferrocarril'
+    ) {
+      r = 20;
+    } else if (
+      place.id === 'centro_cultural_juanele' ||
+      place.id === 'casa_de_gobierno' ||
+      place.id === 'sala_mayo'
+    ) {
+      r = 18;
+    } else if (
+      place.id === 'plaza_1_de_mayo' ||
+      place.id === 'parque_urquiza' ||
+      place.id === 'parque_gazzano'
+    ) {
+      r = 24;
+    } else if (
+      place.id === 'la_vieja_usina' ||
+      place.id === 'escuela_normal' ||
+      place.id === 'colegio_del_huerto' ||
+      place.id === 'teatro_3_febrero'
+    ) {
+      r = 15;
+    }
 
-  // 7. Complejo del Túnel Subfluvial Hernandarias
-  const tunel = buildTunelSubfluvial();
-  tunel.position.set(241.4, 1.0, -289.4);
-  scene.add(tunel);
+    exclusions.push({ x, z, r });
+  });
 
-  // 8. Estadio Presbítero Bartolomé Grella (Club Atlético Patronato)
-  const estadio = buildEstadioGrella();
-  estadio.position.set(208.3, 4.0, 118.6);
-  scene.add(estadio);
-
-  // 9. Easter Egg 1: El Gran Mate Cósmico debajo de la maqueta
-  const mate = buildEasterEggMate();
-  mate.position.set(0, -26.0, 0);
-  scene.add(mate);
-
-  // 10. Easter Egg 2: El Dorado Mítico en el Río Paraná
-  const dorado = buildEasterEggDorado();
-  dorado.position.set(-170.0, 0.4, -140.0);
-  scene.add(dorado);
-
-  return { dorado };
+  return { dorado: doradoMesh, exclusions };
 }

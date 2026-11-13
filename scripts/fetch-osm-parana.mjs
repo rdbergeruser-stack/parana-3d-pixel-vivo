@@ -38,6 +38,9 @@ const OVERPASS_QUERY = `[out:json][timeout:35];
   // 4. Parks
   way["leisure"="park"]["name"~"Urquiza|Varisco|Nuevo|Gazzano|Thompson",i](${BBOX});
   relation["leisure"="park"]["name"~"Urquiza|Varisco|Nuevo|Gazzano|Thompson",i](${BBOX});
+
+  // 5. Railways (Ferrocarril General Urquiza)
+  way["railway"="rail"](${BBOX});
 );
 out geom;`;
 
